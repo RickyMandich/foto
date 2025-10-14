@@ -37,12 +37,6 @@ process_folder() {
         return 1
     }
     
-    # Rinomina list.txt in photo.txt se esiste
-    if [[ -f "list.txt" ]]; then
-        mv "list.txt" "photo.txt"
-        echo -e "${GREEN}📝 Rinominato list.txt → photo.txt${NC}"
-    fi
-    
     # Genera photo.txt con tutte le immagini
     echo -e "${BLUE}🖼️  Scansione immagini...${NC}"
     
@@ -146,7 +140,7 @@ main() {
         for gallery in "${galleries_with_photos[@]}"; do
             echo "$gallery" >> gallery.txt
         done
-        sort gallery.txt -o gallery.txt
+        sort -r gallery.txt -o gallery.txt
         echo -e "${GREEN}✅ Generato gallery.txt con ${#galleries_with_photos[@]} gallerie${NC}"
     else
         rm -f gallery.txt
