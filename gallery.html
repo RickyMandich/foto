@@ -1,1272 +1,329 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-bs-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galleria Foto</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-        }
-
-        .main-container {
-            padding: 20px 0;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .back-button {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-        }
-
-        .back-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-
-        .view-toggle {
-            margin-bottom: 30px;
-        }
-
-        .btn-toggle {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            color: white;
-        }
-
-        .btn-toggle.active {
-            background: #4fc3f7;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(79, 195, 247, 0.4);
-        }
-
-        /* Stili Carosello Migliorati */
-        .carousel-container {
-            position: relative;
-            height: 80vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: visible;
-            padding: 0 60px;
-        }
-
-        .carousel-track {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            max-width: 1000px;
-        }
-
-        .carousel-item {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            max-width: 90vw;
-            max-height: 75vh;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            touch-action: manipulation;
-        }
-
-        .carousel-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 15px;
-            background: rgba(0, 0, 0, 0.1);
-            max-width: 100%;
-            max-height: 100%;
-        }
-
-        .carousel-item.active {
-            z-index: 3;
-            transform: translate(-50%, -50%) scale(1);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-        }
-
-        .carousel-item.prev {
-            z-index: 2;
-            transform: translate(calc(-50% - 200px), -50%) scale(0.7);
-            opacity: 0.4;
-        }
-
-        .carousel-item.next {
-            z-index: 2;
-            transform: translate(calc(-50% + 200px), -50%) scale(0.7);
-            opacity: 0.4;
-        }
-
-        .carousel-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            z-index: 10;
-            color: white;
-        }
-
-        .carousel-nav:hover {
-            background: #4fc3f7;
-            color: white;
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .carousel-nav.prev {
-            left: 20px;
-        }
-
-        .carousel-nav.next {
-            right: 20px;
-        }
-
-
-
-        /* Stili Griglia Migliorati */
-        .grid-container {
-            display: none;
-        }
-
-        .grid-container.active {
-            display: block;
-        }
-
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 20px 0;
-        }
-
-        .grid-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .grid-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-        }
-
-        .grid-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .grid-item:hover img {
-            transform: scale(1.05);
-        }
-
-        .photo-counter {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            backdrop-filter: blur(10px);
-            z-index: 10;
-        }
-
-        .photo-info {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            max-width: 90%;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .photo-name {
-            font-size: 16px;
-            font-weight: 500;
-            margin: 0;
-            word-break: break-all;
-        }
-
-        .download-btn {
-            background: #4fc3f7;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .download-btn:hover {
-            background: #29b6f6;
-            transform: scale(1.1);
-        }
-
-        .download-btn:active {
-            transform: scale(0.95);
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            color: white;
-            font-size: 18px;
-        }
-
-        .spinner-border {
-            margin-right: 15px;
-        }
-
-        /* Responsive migliorato */
-        @media (max-width: 768px) {
-            .carousel-container {
-                height: 70vh;
-                padding: 0 40px;
-            }
-
-            .carousel-item {
-                max-width: 95vw;
-                max-height: 65vh;
-            }
-
-            .carousel-item.prev {
-                transform: translate(calc(-50% - 150px), -50%) scale(0.6);
-            }
-            
-            .carousel-item.next {
-                transform: translate(calc(-50% + 150px), -50%) scale(0.6);
-            }
-
-            .carousel-nav {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-
-            .carousel-nav.prev {
-                left: 10px;
-            }
-
-            .carousel-nav.next {
-                right: 10px;
-            }
-
-            .photo-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 15px;
-            }
-
-            .photo-info {
-                bottom: 60px;
-                padding: 10px 20px;
-                gap: 10px;
-            }
-
-            .photo-name {
-                font-size: 14px;
-            }
-
-            .download-btn {
-                width: 35px;
-                height: 35px;
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .carousel-container {
-                padding: 0 30px;
-                height: 60vh;
-            }
-
-            .carousel-item {
-                max-width: 98vw;
-                max-height: 55vh;
-            }
-
-            .carousel-item.prev {
-                transform: translate(calc(-50% - 100px), -50%) scale(0.5);
-                opacity: 0.3;
-            }
-            
-            .carousel-item.next {
-                transform: translate(calc(-50% + 100px), -50%) scale(0.5);
-                opacity: 0.3;
-            }
-
-            .btn-toggle {
-                padding: 8px 20px;
-                font-size: 14px;
-            }
-
-            .carousel-nav {
-                width: 35px;
-                height: 35px;
-                font-size: 14px;
-            }
-
-            .photo-info {
-                bottom: 50px;
-                padding: 8px 15px;
-                gap: 8px;
-                max-width: 95%;
-            }
-
-            .photo-name {
-                font-size: 12px;
-            }
-
-            .download-btn {
-                width: 30px;
-                height: 30px;
-                font-size: 12px;
-            }
-        }
-
-        /* Zoom protection */
-        .carousel-item.zooming {
-            pointer-events: none;
-        }
-
-        .carousel-track.zoom-active {
-            touch-action: none;
-        }
-
-        /* Audio Controls Styles */
-        .audio-controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .audio-controls:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: translateY(-2px);
-        }
-
-        .audio-btn {
-            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
-        }
-
-        .audio-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.4);
-        }
-
-        .audio-btn:active {
-            transform: scale(0.95);
-        }
-
-        .audio-btn.playing {
-            background: linear-gradient(135deg, #66bb6a, #4caf50);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .volume-slider {
-            width: 80px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            outline: none;
-            cursor: pointer;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #4fc3f7;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .volume-slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            background: #4fc3f7;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .volume-icon {
-            color: #4fc3f7;
-            font-size: 14px;
-        }
-
-        .audio-info {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
-            max-width: 150px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @media (max-width: 768px) {
-            .audio-controls {
-                top: 10px;
-                right: 10px;
-                padding: 8px;
-                gap: 8px;
-            }
-
-            .audio-info {
-                display: none;
-            }
-
-            .volume-control {
-                gap: 5px;
-            }
-
-            .audio-btn {
-                width: 35px;
-                height: 35px;
-                font-size: 14px;
-            }
-
-            .volume-slider {
-                width: 60px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Galleria</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <button class="back-button" onclick="window.location.href='index.html'">
-        <i class="fas fa-arrow-left"></i>
-    </button>
+<body class="bg-dark text-light overflow-hidden">
 
-    <!-- Audio Controls -->
-    <div class="audio-controls" id="audioControls" style="display: none;">
-        <button class="audio-btn" id="playPauseBtn" title="Play/Pause">
-            <i class="fas fa-play"></i>
-        </button>
-        <div class="volume-control">
-            <i class="fas fa-volume-up volume-icon"></i>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
-        </div>
-        <div class="audio-info" id="audioInfo">Nessun audio</div>
+  <nav class="navbar bg-secondary px-2 py-1 sticky-top flex-nowrap" style="min-height:3rem;">
+    <a href="index.html" class="btn btn-sm btn-outline-light me-2 flex-shrink-0" title="Indietro">
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <span id="title" class="navbar-brand text-truncate me-auto mb-0 small"></span>
+
+    <div class="btn-group btn-group-sm me-2 flex-shrink-0" role="group" aria-label="Vista">
+      <input type="radio" class="btn-check" name="view" id="viewCarousel" autocomplete="off" checked>
+      <label class="btn btn-outline-light" for="viewCarousel" title="Carosello">
+        <i class="fa-solid fa-image"></i>
+      </label>
+      <input type="radio" class="btn-check" name="view" id="viewGrid" autocomplete="off">
+      <label class="btn btn-outline-light" for="viewGrid" title="Griglia">
+        <i class="fa-solid fa-table-cells"></i>
+      </label>
     </div>
 
-    <div class="container-fluid main-container">
-        <div class="row">
-            <div class="col-12 text-center header">
-                <h1 id="galleryTitle">
-                    <i class="fas fa-camera-retro me-3"></i>
-                    Galleria Fotografica
-                </h1>
-                
-                <!-- Toggle View Buttons -->
-                <div class="view-toggle">
-                    <button class="btn btn-toggle active" id="carouselBtn">
-                        <i class="fas fa-play me-2"></i>Carosello
-                    </button>
-                    <button class="btn btn-toggle" id="gridBtn">
-                        <i class="fas fa-th me-2"></i>Griglia
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading -->
-        <div id="loading" class="loading">
-            <div class="spinner-border text-light" role="status"></div>
-            Caricamento foto in corso...
-        </div>
-
-        <!-- Carousel View -->
-        <div id="carouselView" class="carousel-container">
-            <div class="carousel-track" id="carouselTrack">
-                <!-- Le foto verranno inserite dinamicamente qui -->
-            </div>
-            
-            <button class="carousel-nav prev" id="prevBtn">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="carousel-nav next" id="nextBtn">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            
-
-
-            <div class="photo-counter" id="photoCounter">
-                1 / 0
-            </div>
-
-            <div class="photo-info" id="photoInfo">
-                <p class="photo-name" id="photoName">Nome foto</p>
-                <button class="download-btn" id="downloadBtn" title="Scarica foto">
-                    <i class="fas fa-download"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Grid View -->
-        <div id="gridView" class="grid-container">
-            <div class="container">
-                <div class="photo-grid" id="photoGrid">
-                    <!-- Le foto verranno inserite dinamicamente qui -->
-                </div>
-            </div>
-        </div>
+    <div id="autoplayControls" class="d-flex align-items-center me-2 flex-shrink-0">
+      <input type="checkbox" class="btn-check" id="autoplayToggle" autocomplete="off" checked>
+      <label class="btn btn-sm btn-outline-light me-1" for="autoplayToggle" title="Autoplay foto">
+        <i id="autoplayIcon" class="fa-solid fa-pause"></i>
+      </label>
+      <input type="number" id="intervalInput"
+             class="form-control form-control-sm bg-dark text-light border-secondary"
+             value="4" min="1" max="60" step="1" style="width:4.5rem;"
+             title="Secondi tra una foto e l'altra">
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-    <script>
-        class AudioManager {
-            constructor(folderPath) {
-                this.folderPath = folderPath;
-                this.audioFiles = [];
-                this.currentAudio = null;
-                this.currentIndex = 0;
-                this.isPlaying = false;
-                this.volume = 0.5;
+    <div id="audioControls" class="d-flex align-items-center flex-shrink-0 d-none">
+      <button id="audioPlay" class="btn btn-sm btn-outline-light me-1" title="Play/Pausa musica">
+        <i id="audioPlayIcon" class="fa-solid fa-play"></i>
+      </button>
+      <button id="audioNext" class="btn btn-sm btn-outline-light me-1" title="Brano successivo">
+        <i class="fa-solid fa-forward-step"></i>
+      </button>
+      <input type="range" id="audioVolume" class="form-range" min="0" max="1" step="0.05" value="0.6"
+             style="width:5rem;" title="Volume">
+      <span id="audioTitle" class="ms-2 small text-info text-truncate d-none d-lg-inline"
+            style="max-width:14vw;"></span>
+    </div>
+  </nav>
 
-                this.init();
-            }
+  <div id="loading" class="d-flex align-items-center justify-content-center"
+       style="height:calc(100vh - 3rem);">
+    <div class="spinner-border" role="status"></div>
+  </div>
 
-            async init() {
-                try {
-                    await this.loadAudioList();
-                    if (this.audioFiles.length > 0) {
-                        this.setupUI();
-                        this.playRandomSong();
-                    }
-                } catch (error) {
-                    console.log('Nessun file audio disponibile:', error.message);
-                    // Mostra comunque i controlli anche se non ci sono file audio
-                    this.setupUI();
-                }
-            }
+  <div id="error" class="alert alert-danger m-3 d-none" role="alert"></div>
 
-            async loadAudioList() {
-                try {
-                    const response = await fetch(`${this.folderPath}/song.txt`);
-                    if (!response.ok) {
-                        throw new Error('File song.txt non trovato');
-                    }
+  <div id="carouselView" class="d-none position-relative bg-black"
+       style="height:calc(100vh - 3rem);">
+    <div id="mainCarousel" class="carousel slide h-100"
+         data-bs-ride="false" data-bs-interval="false" data-bs-touch="true">
+      <div id="carouselInner" class="carousel-inner h-100"></div>
+      <button class="carousel-control-prev" type="button"
+              data-bs-target="#mainCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Precedente</span>
+      </button>
+      <button class="carousel-control-next" type="button"
+              data-bs-target="#mainCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Successiva</span>
+      </button>
+    </div>
+    <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-dark bg-opacity-75 rounded small">
+      <i class="fa-solid fa-image me-1"></i><span id="counter">0/0</span>
+    </div>
+  </div>
 
-                    const songList = await response.text();
-                    const allFiles = songList.split('\n')
-                        .map(line => line.trim())
-                        .filter(line => line.length > 0);
+  <div id="gridView" class="d-none p-2 overflow-auto" style="height:calc(100vh - 3rem);">
+    <div id="gridContainer" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2"></div>
+  </div>
 
-                    const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.MP3', '.WAV', '.OGG', '.M4A', '.AAC'];
+  <audio id="audioPlayer" preload="metadata"></audio>
 
-                    this.audioFiles = allFiles.filter(fileName => {
-                        return audioExtensions.some(ext => fileName.endsWith(ext));
-                    }).map(fileName => `${this.folderPath}/${fileName}`);
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const enc = encodeURIComponent;
 
-                    console.log(`Trovati ${this.audioFiles.length} file audio`);
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
 
-                    if (this.audioFiles.length === 0) {
-                        throw new Error('Nessun file audio valido trovato in song.txt');
-                    }
+    function showError(html) {
+      document.getElementById('loading').classList.add('d-none');
+      const err = document.getElementById('error');
+      err.innerHTML = html;
+      err.classList.remove('d-none');
+    }
 
-                } catch (error) {
-                    console.error('Errore nel caricamento audio:', error);
-                    throw error;
-                }
-            }
+    async function fetchLines(url) {
+      try {
+        const r = await fetch(url, { cache: 'no-cache' });
+        if (!r.ok) return [];
+        const t = await r.text();
+        return t.split('\n').map(s => s.trim()).filter(Boolean);
+      } catch { return []; }
+    }
 
-            getRandomIndex() {
-                return Math.floor(Math.random() * this.audioFiles.length);
-            }
+    const params = new URLSearchParams(location.search);
+    const galleryName = params.get('g');
+    const initialPhoto = params.get('p');
 
-            async playRandomSong() {
-                if (this.audioFiles.length === 0) return;
+    if (!galleryName) {
+      showError('Galleria non specificata. <a href="index.html" class="alert-link">Torna alla home</a>');
+      throw new Error('No gallery');
+    }
 
-                this.currentIndex = this.getRandomIndex();
-                await this.playSong(this.currentIndex);
-            }
+    document.title = galleryName;
+    document.getElementById('title').textContent = galleryName;
+    const galleryPath = enc(galleryName);
 
-            async playSong(index) {
-                if (index < 0 || index >= this.audioFiles.length) return;
+    let photos = [];
+    let songs = [];
+    let bsCarousel = null;
+    let autoplayTimer = null;
+    let autoplayEnabled = true;
+    let autoplayPaused = false;
+    let currentView = 'carousel';
+    let initialIndex = 0;
 
-                const audioFile = this.audioFiles[index];
+    function updateUrl(idx) {
+      if (!photos[idx]) return;
+      const url = new URL(location.href);
+      url.searchParams.set('p', photos[idx]);
+      history.replaceState(null, '', url);
+    }
 
-                // Ferma l'audio corrente se presente
-                if (this.currentAudio) {
-                    this.currentAudio.pause();
-                    this.currentAudio = null;
-                }
+    (async () => {
+      [photos, songs] = await Promise.all([
+        fetchLines(galleryPath + '/photo.txt'),
+        fetchLines(galleryPath + '/song.txt')
+      ]);
 
-                try {
-                    this.currentAudio = new Audio(audioFile);
-                    this.currentAudio.volume = this.volume;
-                    this.currentAudio.loop = false;
+      if (!photos.length) {
+        showError('Nessuna foto trovata in questa galleria. <a href="index.html" class="alert-link">Torna alla home</a>');
+        return;
+      }
 
-                    // Gestisce la fine della canzone
-                    this.currentAudio.addEventListener('ended', () => {
-                        this.playRandomSong();
-                    });
+      if (initialPhoto) {
+        const idx = photos.indexOf(initialPhoto);
+        if (idx >= 0) initialIndex = idx;
+      }
 
-                    // Gestisce errori di caricamento
-                    this.currentAudio.addEventListener('error', (e) => {
-                        console.error(`Errore nel caricamento di ${audioFile}:`, e);
-                        this.handleAudioError(audioFile);
-                    });
+      buildCarousel();
+      buildGrid();
+      setupViewToggle();
+      setupAutoplay();
+      setupCarouselPause();
+      if (songs.length) setupAudio();
 
-                    await this.currentAudio.play();
-                    this.isPlaying = true;
-                    console.log(`Riproduzione: ${audioFile.split('/').pop()}`);
+      document.getElementById('loading').classList.add('d-none');
+      document.getElementById('carouselView').classList.remove('d-none');
+    })();
 
-                    // Aggiorna UI
-                    this.updatePlayPauseButton();
-                    this.updateAudioInfo();
+    function buildCarousel() {
+      const inner = document.getElementById('carouselInner');
+      inner.innerHTML = photos.map((p, i) => `
+        <div class="carousel-item h-100 ${i === initialIndex ? 'active' : ''}">
+          <img src="${galleryPath}/${enc(p)}"
+               class="d-block w-100 h-100 object-fit-contain"
+               alt="${escapeHtml(p)}"
+               loading="${Math.abs(i - initialIndex) < 2 ? 'eager' : 'lazy'}"
+               draggable="false">
+        </div>
+      `).join('');
 
-                } catch (error) {
-                    console.error(`Errore nella riproduzione di ${audioFile}:`, error);
-                    // Prova con un'altra canzone se questa fallisce
-                    this.playRandomSong();
-                }
-            }
+      const el = document.getElementById('mainCarousel');
+      bsCarousel = new bootstrap.Carousel(el, { interval: false, ride: false, touch: true, wrap: true });
 
-            togglePlayPause() {
-                if (!this.currentAudio) return;
+      el.addEventListener('slid.bs.carousel', e => {
+        document.getElementById('counter').textContent = `${e.to + 1}/${photos.length}`;
+        updateUrl(e.to);
+      });
+      document.getElementById('counter').textContent = `${initialIndex + 1}/${photos.length}`;
+      updateUrl(initialIndex);
+    }
 
-                if (this.isPlaying) {
-                    this.currentAudio.pause();
-                    this.isPlaying = false;
-                } else {
-                    this.currentAudio.play();
-                    this.isPlaying = true;
-                }
-                this.updatePlayPauseButton();
-            }
+    function buildGrid() {
+      const c = document.getElementById('gridContainer');
+      c.innerHTML = photos.map((p, i) => `
+        <div class="col">
+          <div class="ratio ratio-1x1 bg-secondary rounded overflow-hidden" role="button" data-idx="${i}">
+            <img src="${galleryPath}/${enc(p)}"
+                 class="object-fit-cover w-100 h-100"
+                 alt="${escapeHtml(p)}" loading="lazy">
+          </div>
+        </div>
+      `).join('');
+      c.addEventListener('click', e => {
+        const target = e.target.closest('[data-idx]');
+        if (!target) return;
+        const idx = +target.dataset.idx;
+        document.getElementById('viewCarousel').checked = true;
+        setView('carousel');
+        bsCarousel.to(idx);
+      });
+    }
 
-            setVolume(volume) {
-                this.volume = Math.max(0, Math.min(1, volume));
-                if (this.currentAudio) {
-                    this.currentAudio.volume = this.volume;
-                }
-            }
+    function setView(view) {
+      currentView = view;
+      const cv = document.getElementById('carouselView');
+      const gv = document.getElementById('gridView');
+      const ac = document.getElementById('autoplayControls');
+      if (view === 'carousel') {
+        cv.classList.remove('d-none');
+        gv.classList.add('d-none');
+        ac.classList.remove('d-none');
+        if (autoplayEnabled) startAutoplay();
+      } else {
+        cv.classList.add('d-none');
+        gv.classList.remove('d-none');
+        ac.classList.add('d-none');
+        stopAutoplay();
+      }
+    }
 
-            stop() {
-                if (this.currentAudio) {
-                    this.currentAudio.pause();
-                    this.currentAudio = null;
-                    this.isPlaying = false;
-                }
-            }
+    function setupViewToggle() {
+      document.getElementById('viewCarousel').addEventListener('change', () => setView('carousel'));
+      document.getElementById('viewGrid').addEventListener('change', () => setView('grid'));
+    }
 
-            setupUI() {
-                const audioControls = document.getElementById('audioControls');
-                const playPauseBtn = document.getElementById('playPauseBtn');
-                const volumeSlider = document.getElementById('volumeSlider');
-                const audioInfo = document.getElementById('audioInfo');
+    function setupAutoplay() {
+      const tog = document.getElementById('autoplayToggle');
+      const inp = document.getElementById('intervalInput');
+      const icon = document.getElementById('autoplayIcon');
 
-                // Mostra sempre i controlli, anche se non ci sono file audio
-                audioControls.style.display = 'flex';
+      tog.addEventListener('change', () => {
+        autoplayEnabled = tog.checked;
+        icon.className = autoplayEnabled ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+        if (autoplayEnabled) startAutoplay(); else stopAutoplay();
+      });
+      inp.addEventListener('change', () => {
+        if (autoplayEnabled && currentView === 'carousel') startAutoplay();
+      });
 
-                // Setup play/pause button
-                playPauseBtn.addEventListener('click', () => {
-                    if (this.audioFiles.length > 0) {
-                        this.togglePlayPause();
-                        this.updatePlayPauseButton();
-                    }
-                });
+      startAutoplay();
+    }
 
-                // Setup volume slider
-                volumeSlider.addEventListener('input', (e) => {
-                    this.setVolume(e.target.value / 100);
-                });
+    function startAutoplay() {
+      stopAutoplay();
+      if (!autoplayEnabled || autoplayPaused || currentView !== 'carousel') return;
+      const sec = Math.max(1, +document.getElementById('intervalInput').value || 4);
+      autoplayTimer = setInterval(() => bsCarousel && bsCarousel.next(), sec * 1000);
+    }
 
-                // Update UI initially
-                this.updatePlayPauseButton();
-                this.updateAudioInfo();
+    function stopAutoplay() {
+      if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; }
+    }
 
-                // Disabilita i controlli se non ci sono file audio
-                if (this.audioFiles.length === 0) {
-                    playPauseBtn.disabled = true;
-                    playPauseBtn.style.opacity = '0.5';
-                    playPauseBtn.style.cursor = 'not-allowed';
-                }
-            }
+    function setupCarouselPause() {
+      const cv = document.getElementById('carouselView');
+      cv.addEventListener('mouseenter', () => { autoplayPaused = true; stopAutoplay(); });
+      cv.addEventListener('mouseleave', () => { autoplayPaused = false; if (autoplayEnabled) startAutoplay(); });
+      cv.addEventListener('touchstart', () => { autoplayPaused = true; stopAutoplay(); }, { passive: true });
+      cv.addEventListener('touchend', () => {
+        setTimeout(() => {
+          autoplayPaused = false;
+          if (autoplayEnabled && currentView === 'carousel') startAutoplay();
+        }, 1500);
+      }, { passive: true });
+    }
 
-            updatePlayPauseButton() {
-                const playPauseBtn = document.getElementById('playPauseBtn');
-                const icon = playPauseBtn.querySelector('i');
+    function setupAudio() {
+      const ac = document.getElementById('audioControls');
+      ac.classList.remove('d-none');
 
-                if (this.isPlaying) {
-                    icon.className = 'fas fa-pause';
-                    playPauseBtn.classList.add('playing');
-                    playPauseBtn.title = 'Pause';
-                } else {
-                    icon.className = 'fas fa-play';
-                    playPauseBtn.classList.remove('playing');
-                    playPauseBtn.title = 'Play';
-                }
-            }
+      const audio = document.getElementById('audioPlayer');
+      const btnPlay = document.getElementById('audioPlay');
+      const btnNext = document.getElementById('audioNext');
+      const vol = document.getElementById('audioVolume');
+      const titleEl = document.getElementById('audioTitle');
+      const playIcon = document.getElementById('audioPlayIcon');
 
-            updateAudioInfo() {
-                const audioInfo = document.getElementById('audioInfo');
-                if (this.currentAudio && this.audioFiles.length > 0) {
-                    const fileName = this.audioFiles[this.currentIndex].split('/').pop();
-                    audioInfo.textContent = fileName;
-                } else if (this.audioFiles.length > 0) {
-                    audioInfo.textContent = `${this.audioFiles.length} brani disponibili`;
-                } else {
-                    audioInfo.textContent = 'Nessun audio';
-                }
-            }
+      const queue = [...songs].sort(() => Math.random() - 0.5);
+      let idx = 0;
+      let errorStreak = 0;
 
-            handleAudioError(failedFile) {
-                // Rimuovi il file problematico dalla lista
-                const failedIndex = this.audioFiles.indexOf(failedFile);
-                if (failedIndex > -1) {
-                    this.audioFiles.splice(failedIndex, 1);
-                    console.log(`Rimosso file audio non funzionante: ${failedFile}`);
-                }
+      function load(i) {
+        idx = ((i % queue.length) + queue.length) % queue.length;
+        const f = queue[idx];
+        audio.src = galleryPath + '/' + enc(f);
+        titleEl.textContent = f.replace(/\.[^.]+$/, '');
+      }
 
-                // Se ci sono ancora file disponibili, prova con un altro
-                if (this.audioFiles.length > 0) {
-                    this.playRandomSong();
-                } else {
-                    console.log('Nessun file audio funzionante disponibile');
-                    this.updateAudioInfo();
-                    this.isPlaying = false;
-                    this.updatePlayPauseButton();
-                }
-            }
+      audio.volume = +vol.value;
+      vol.addEventListener('input', () => audio.volume = +vol.value);
 
-            // Metodo per verificare se un file audio esiste
-            async checkAudioFile(audioFile) {
-                try {
-                    const response = await fetch(audioFile, { method: 'HEAD' });
-                    return response.ok;
-                } catch (error) {
-                    return false;
-                }
-            }
+      btnPlay.addEventListener('click', () => {
+        if (audio.paused) audio.play().catch(() => {});
+        else audio.pause();
+      });
+      btnNext.addEventListener('click', () => {
+        errorStreak = 0;
+        load(idx + 1);
+        audio.play().catch(() => {});
+      });
+
+      audio.addEventListener('play', () => playIcon.className = 'fa-solid fa-pause');
+      audio.addEventListener('pause', () => playIcon.className = 'fa-solid fa-play');
+      audio.addEventListener('playing', () => { errorStreak = 0; });
+      audio.addEventListener('ended', () => { load(idx + 1); audio.play().catch(() => {}); });
+      audio.addEventListener('error', () => {
+        errorStreak++;
+        if (errorStreak < queue.length) {
+          load(idx + 1);
+          audio.play().catch(() => {});
         }
-
-        class PhotoGallery {
-            constructor() {
-                this.photos = [];
-                this.currentIndex = 0;
-                this.isCarouselView = true;
-                this.autoPlayInterval = null;
-                this.touchStartX = 0;
-                this.touchEndX = 0;
-                this.touchStartY = 0;
-                this.touchEndY = 0;
-                this.isZooming = false;
-                this.lastTouchDistance = 0;
-                this.folderPath = '';
-                this.audioManager = null;
-
-                this.init();
-            }
-
-            async init() {
-                try {
-                    this.getFolderFromURL();
-                    await this.loadPhotos();
-                    this.setupEventListeners();
-                    this.renderCarousel();
-                    this.renderGrid();
-                    this.startAutoPlay();
-                    this.hideLoading();
-                    this.updateTitle();
-
-                    // Inizializza l'audio manager
-                    this.audioManager = new AudioManager(this.folderPath);
-                } catch (error) {
-                    console.error('Errore durante l\'inizializzazione:', error);
-                    this.showError();
-                }
-            }
-
-            getFolderFromURL() {
-                const urlParams = new URLSearchParams(window.location.search);
-                this.folderPath = urlParams.get('folder') || '';
-                if (!this.folderPath) {
-                    throw new Error('Parametro folder mancante nell\'URL');
-                }
-            }
-
-            updateTitle() {
-                const title = document.getElementById('galleryTitle');
-                const displayName = this.formatDisplayName(this.folderPath);
-                title.innerHTML = `<i class="fas fa-camera-retro me-3"></i>${displayName}`;
-                document.title = `${displayName} - Galleria Foto`;
-            }
-
-            formatDisplayName(dirName) {
-                return dirName
-                    .replace(/^\d{4}-\d{2}-\d{2}\s*/, '')
-                    .replace(/\s*filtrato\s*$/i, '')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
-            }
-
-            async loadPhotos() {
-                try {
-                    const response = await fetch(`${this.folderPath}/photo.txt`);
-                    if (!response.ok) {
-                        throw new Error('File photo.txt non trovato');
-                    }
-
-                    const fileList = await response.text();
-                    const allFiles = fileList.split('\n')
-                        .map(line => line.trim())
-                        .filter(line => line.length > 0);
-
-                    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.JPG', '.JPEG', '.PNG', '.GIF', '.WEBP'];
-
-                    this.photos = allFiles.filter(fileName => {
-                        if (fileName === 'index.htm' || fileName === 'index.html' || fileName === 'photo.txt' || fileName === 'song.txt') {
-                            return false;
-                        }
-                        return imageExtensions.some(ext => fileName.endsWith(ext));
-                    }).map(fileName => `${this.folderPath}/${fileName}`);
-
-                    this.photos.sort();
-
-                    if (this.photos.length === 0) {
-                        throw new Error('Nessun file immagine trovato');
-                    }
-
-                    console.log(`Trovate ${this.photos.length} foto`);
-
-                } catch (error) {
-                    console.error('Errore nel caricamento:', error);
-                    throw error;
-                }
-            }
-
-            setupEventListeners() {
-                // Toggle view buttons
-                document.getElementById('carouselBtn').addEventListener('click', () => this.switchView('carousel'));
-                document.getElementById('gridBtn').addEventListener('click', () => this.switchView('grid'));
-
-                // Carousel navigation
-                document.getElementById('prevBtn').addEventListener('click', () => this.previousPhoto());
-                document.getElementById('nextBtn').addEventListener('click', () => this.nextPhoto());
-
-                // Download button
-                document.getElementById('downloadBtn').addEventListener('click', () => this.downloadCurrentPhoto());
-
-                // Touch events migliorati per mobile
-                const carouselTrack = document.getElementById('carouselTrack');
-                carouselTrack.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-                carouselTrack.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-                carouselTrack.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
-
-                // Keyboard navigation
-                document.addEventListener('keydown', (e) => {
-                    if (this.isCarouselView && !this.isZooming) {
-                        if (e.key === 'ArrowLeft') this.previousPhoto();
-                        if (e.key === 'ArrowRight') this.nextPhoto();
-                    }
-                });
-
-                // Pause auto-play on hover
-                const carouselContainer = document.getElementById('carouselView');
-                carouselContainer.addEventListener('mouseenter', () => this.stopAutoPlay());
-                carouselContainer.addEventListener('mouseleave', () => this.startAutoPlay());
-            }
-
-            switchView(view) {
-                const carouselBtn = document.getElementById('carouselBtn');
-                const gridBtn = document.getElementById('gridBtn');
-                const carouselView = document.getElementById('carouselView');
-                const gridView = document.getElementById('gridView');
-
-                if (view === 'carousel') {
-                    this.isCarouselView = true;
-                    carouselBtn.classList.add('active');
-                    gridBtn.classList.remove('active');
-                    carouselView.style.display = 'flex';
-                    gridView.classList.remove('active');
-                    this.startAutoPlay();
-                } else {
-                    this.isCarouselView = false;
-                    gridBtn.classList.add('active');
-                    carouselBtn.classList.remove('active');
-                    carouselView.style.display = 'none';
-                    gridView.classList.add('active');
-                    this.stopAutoPlay();
-                }
-            }
-
-            renderCarousel() {
-                const track = document.getElementById('carouselTrack');
-                const counter = document.getElementById('photoCounter');
-
-                track.innerHTML = '';
-
-                this.photos.forEach((photo, index) => {
-                    // Carousel items
-                    const item = document.createElement('div');
-                    item.className = 'carousel-item';
-                    item.innerHTML = `<img src="${photo}" alt="Foto ${index + 1}" loading="lazy">`;
-                    track.appendChild(item);
-                });
-
-                this.updateCarousel();
-                counter.textContent = `${this.currentIndex + 1} / ${this.photos.length}`;
-
-                // Inizializza il nome della prima foto
-                this.updatePhotoInfo();
-            }
-
-            renderGrid() {
-                const grid = document.getElementById('photoGrid');
-                grid.innerHTML = '';
-
-                this.photos.forEach((photo, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'grid-item';
-                    item.innerHTML = `<img src="${photo}" alt="Foto ${index + 1}" loading="lazy">`;
-                    item.addEventListener('click', () => {
-                        this.currentIndex = index;
-                        this.switchView('carousel');
-                        this.updateCarousel();
-                    });
-                    grid.appendChild(item);
-                });
-            }
-
-            updateCarousel() {
-                const items = document.querySelectorAll('.carousel-item');
-                const counter = document.getElementById('photoCounter');
-
-                items.forEach((item, index) => {
-                    item.className = 'carousel-item';
-
-                    if (index === this.currentIndex) {
-                        item.classList.add('active');
-                    } else if (index === this.getPrevIndex()) {
-                        item.classList.add('prev');
-                    } else if (index === this.getNextIndex()) {
-                        item.classList.add('next');
-                    }
-                });
-
-                counter.textContent = `${this.currentIndex + 1} / ${this.photos.length}`;
-
-                // Aggiorna nome file
-                this.updatePhotoInfo();
-            }
-
-            updatePhotoInfo() {
-                const photoName = document.getElementById('photoName');
-                const currentPhoto = this.photos[this.currentIndex];
-
-                if (currentPhoto) {
-                    // Estrae solo il nome del file dal percorso completo
-                    const fileName = currentPhoto.split('/').pop();
-                    photoName.textContent = fileName;
-                }
-            }
-
-            downloadCurrentPhoto() {
-                const currentPhoto = this.photos[this.currentIndex];
-                if (!currentPhoto) return;
-
-                // Crea un link temporaneo per il download
-                const link = document.createElement('a');
-                link.href = currentPhoto;
-                link.download = currentPhoto.split('/').pop(); // Nome del file
-                link.style.display = 'none';
-
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                // Feedback visivo
-                const downloadBtn = document.getElementById('downloadBtn');
-                const originalIcon = downloadBtn.innerHTML;
-                downloadBtn.innerHTML = '<i class="fas fa-check"></i>';
-                downloadBtn.style.background = '#4caf50';
-
-                setTimeout(() => {
-                    downloadBtn.innerHTML = originalIcon;
-                    downloadBtn.style.background = '#4fc3f7';
-                }, 1500);
-            }
-
-            getPrevIndex() {
-                return this.currentIndex === 0 ? this.photos.length - 1 : this.currentIndex - 1;
-            }
-
-            getNextIndex() {
-                return this.currentIndex === this.photos.length - 1 ? 0 : this.currentIndex + 1;
-            }
-
-            previousPhoto() {
-                if (!this.isZooming) {
-                    this.currentIndex = this.getPrevIndex();
-                    this.updateCarousel();
-                }
-            }
-
-            nextPhoto() {
-                if (!this.isZooming) {
-                    this.currentIndex = this.getNextIndex();
-                    this.updateCarousel();
-                }
-            }
-
-            goToPhoto(index) {
-                if (!this.isZooming) {
-                    this.currentIndex = index;
-                    this.updateCarousel();
-                }
-            }
-
-            startAutoPlay() {
-                if (this.isCarouselView && this.photos.length > 1 && !this.isZooming) {
-                    this.autoPlayInterval = setInterval(() => {
-                        this.nextPhoto();
-                    }, 4000); // 4 secondi
-                }
-            }
-
-            stopAutoPlay() {
-                if (this.autoPlayInterval) {
-                    clearInterval(this.autoPlayInterval);
-                    this.autoPlayInterval = null;
-                }
-            }
-
-            // Gestione touch migliorata per distinguere zoom da swipe
-            handleTouchStart(e) {
-                if (e.touches.length === 1) {
-                    // Single touch - possibile swipe
-                    this.touchStartX = e.touches[0].clientX;
-                    this.touchStartY = e.touches[0].clientY;
-                    this.isZooming = false;
-                } else if (e.touches.length === 2) {
-                    // Multi-touch - zoom
-                    this.isZooming = true;
-                    this.lastTouchDistance = this.getTouchDistance(e.touches[0], e.touches[1]);
-                    document.getElementById('carouselTrack').classList.add('zoom-active');
-
-                    // Ferma l'autoplay durante lo zoom
-                    this.stopAutoPlay();
-
-                    // Previeni il comportamento di default
-                    e.preventDefault();
-                }
-            }
-
-            handleTouchMove(e) {
-                if (e.touches.length === 2 && this.isZooming) {
-                    // Gestione zoom
-                    const currentDistance = this.getTouchDistance(e.touches[0], e.touches[1]);
-                    const scale = currentDistance / this.lastTouchDistance;
-
-                    // Previeni il comportamento di default durante lo zoom
-                    e.preventDefault();
-                } else if (e.touches.length === 1 && !this.isZooming) {
-                    // Calcola la distanza per determinare se è uno swipe intenzionale
-                    const deltaX = Math.abs(e.touches[0].clientX - this.touchStartX);
-                    const deltaY = Math.abs(e.touches[0].clientY - this.touchStartY);
-
-                    // Se il movimento orizzontale è maggiore di quello verticale, previeni lo scroll
-                    if (deltaX > deltaY && deltaX > 10) {
-                        e.preventDefault();
-                    }
-                }
-            }
-
-            handleTouchEnd(e) {
-                if (this.isZooming) {
-                    // Fine zoom
-                    this.isZooming = false;
-                    document.getElementById('carouselTrack').classList.remove('zoom-active');
-
-                    // Riavvia l'autoplay dopo un breve delay
-                    setTimeout(() => {
-                        if (this.isCarouselView) {
-                            this.startAutoPlay();
-                        }
-                    }, 1000);
-                } else if (e.changedTouches.length === 1) {
-                    // Fine swipe
-                    this.touchEndX = e.changedTouches[0].clientX;
-                    this.touchEndY = e.changedTouches[0].clientY;
-                    this.handleSwipe();
-                }
-            }
-
-            getTouchDistance(touch1, touch2) {
-                const dx = touch1.clientX - touch2.clientX;
-                const dy = touch1.clientY - touch2.clientY;
-                return Math.sqrt(dx * dx + dy * dy);
-            }
-
-            handleSwipe() {
-                const swipeThreshold = 50;
-                const deltaX = this.touchStartX - this.touchEndX;
-                const deltaY = Math.abs(this.touchStartY - this.touchEndY);
-
-                // Solo se il movimento orizzontale è maggiore di quello verticale
-                // e supera la soglia minima
-                if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > deltaY) {
-                    if (deltaX > 0) {
-                        this.nextPhoto();
-                    } else {
-                        this.previousPhoto();
-                    }
-                }
-            }
-
-            hideLoading() {
-                document.getElementById('loading').style.display = 'none';
-            }
-
-            showError() {
-                const loading = document.getElementById('loading');
-                loading.innerHTML = `
-                    <div class="text-center text-white">
-                        <i class="fas fa-exclamation-triangle mb-3" style="font-size: 48px;"></i>
-                        <h4>Errore nel caricamento</h4>
-                        <p>Impossibile caricare le foto dalla cartella specificata</p>
-                        <button class="btn btn-outline-light mt-3" onclick="window.location.href='index.html'">
-                            <i class="fas fa-arrow-left me-2"></i>Torna all'indice
-                        </button>
-                    </div>
-                `;
-            }
-        }
-
-        // Gestione errori globali
-        window.addEventListener('error', (event) => {
-            console.error('Errore JavaScript:', event.error);
-            console.error('File:', event.filename);
-            console.error('Linea:', event.lineno);
-        });
-
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Promise rejection:', event.reason);
-        });
-
-        // Inizializza la galleria quando la pagina è caricata
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                new PhotoGallery();
-            } catch (error) {
-                console.error('Errore critico nell\'inizializzazione:', error);
-                // Mostra un messaggio di errore all'utente
-                const loading = document.getElementById('loading');
-                if (loading) {
-                    loading.innerHTML = `
-                        <div class="text-center text-white">
-                            <i class="fas fa-exclamation-triangle mb-3" style="font-size: 48px; color: #ff6b6b;"></i>
-                            <h4>Errore di Caricamento</h4>
-                            <p>Si è verificato un errore durante l'inizializzazione della galleria.</p>
-                            <button class="btn btn-outline-light mt-3" onclick="window.location.href='index.html'">
-                                <i class="fas fa-arrow-left me-2"></i>Torna all'Indice
-                            </button>
-                        </div>
-                    `;
-                }
-            }
-        });
-    </script>
+      });
+
+      load(0);
+    }
+  </script>
 </body>
 </html>

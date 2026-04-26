@@ -17,17 +17,70 @@ Sistema di gallerie fotografiche completamente automatizzato con supporto audio,
 ```
 /
 ├── index.html              # Homepage con rilevamento automatico gallerie
-├── gallery.html            # Visualizzatore galleria con carosello e griglia
+├── gallery.html            # Visualizzatore galleria (carosello + griglia + audio)
 ├── gallery.txt             # Lista gallerie (generato automaticamente)
 ├── bash/
 │   ├── scan.sh             # Script scansione automatica
-│   └── deploy.sh           # Script deploy automatico
+│   └── all.sh              # Script deploy automatico (commit + push con versioning)
 └── [nome-galleria]/
     ├── *.JPG               # File foto (JPG, PNG, WEBP, etc.)
     ├── *.mp3               # File audio opzionali
     ├── photo.txt           # Lista foto (generato automaticamente)
     └── song.txt            # Lista audio (generato automaticamente)
 ```
+
+## 🧠 Logica del Sito
+
+Il sito è una **SPA statica a due pagine** scritta solo con HTML + Bootstrap 5.3 + vanilla JS, senza backend e senza classi CSS personalizzate. Tutto il rendering avviene lato client a partire dai file di testo generati da `bash/scan.sh`.
+
+### Tema
+- Dark mode forzato tramite `data-bs-theme="dark"` sul tag `<html>`.
+- Solo classi e utility Bootstrap 5.3 (es. `bg-secondary`, `bg-dark`, `text-info`, `ratio`, `object-fit-*`, `position-*`, `btn-group`, `btn-check`, `form-range`, ecc.).
+- Icone via Font Awesome 6.4.
+
+### `index.html` — Homepage
+1. Carica `gallery.txt` (una galleria per riga).
+2. Per ogni galleria fa fetch in parallelo di `<galleria>/photo.txt` e `<galleria>/song.txt` per ottenere i conteggi.
+3. Filtra le gallerie senza foto.
+4. Renderizza una griglia di card (`row-cols-1/2/3`):
+   - **Cover** = prima foto della galleria (`ratio 16x9`, `object-fit-cover`, `loading="lazy"`).
+   - **Titolo** parsato dal nome cartella (`YYYY MM DD - descrizione` → `descrizione` + data `DD/MM/YYYY`).
+   - **Badge** con numero foto e numero brani audio.
+   - L'intera card è cliccabile (`stretched-link`) verso `gallery.html?g=<nome-galleria>`.
+5. Stati gestiti: spinner di caricamento, alert di errore se `gallery.txt` manca o non ci sono foto.
+
+### `gallery.html` — Visualizzatore
+Riceve il nome galleria via query string `?g=<nome>` (decodificato con `decodeURIComponent`) e carica `<galleria>/photo.txt` e `<galleria>/song.txt`.
+
+**Deep linking**: la URL accetta anche un parametro opzionale `&p=<nome-file-foto>` per aprire il carosello direttamente su una foto specifica (es. `gallery.html?g=2025%2010%2014%20-%20corteo%20udine&p=IMGP6055.JPG`). Ad ogni cambio slide la URL viene aggiornata in tempo reale via `history.replaceState` (senza creare entry nella cronologia), così è sempre condivisibile copiando dalla barra del browser. Si usa il **nome file** invece dell'indice numerico per garantire stabilità del link anche se in futuro vengono aggiunte/rimosse foto dalla galleria.
+
+**Toolbar fissa in alto** (unica, compatta, non invasiva) contenente nell'ordine:
+- Pulsante "Indietro" → `index.html`.
+- Titolo galleria (troncato).
+- Toggle vista **Carosello / Griglia** (`btn-group` con `btn-check`).
+- Controlli autoplay (visibili solo in vista Carosello):
+  - **Toggle autoplay** on/off (icona pause/play).
+  - **Input numerico** in secondi tra una foto e l'altra (1–60, default 4).
+- Controlli audio (visibili solo se la galleria ha brani):
+  - Play/Pause, Next, slider Volume, titolo brano corrente (nascosto sotto `lg`).
+
+**Vista Carosello** (default, riempie tutta l'altezza disponibile sotto la toolbar):
+- Bootstrap `carousel` con `interval: false` — l'autoplay è gestito da `setInterval` custom basato sull'input secondi, così è dinamico.
+- Frecce prev/next, swipe touch nativo Bootstrap.
+- Contatore overlay `n/totale` in alto a destra.
+- Autoplay si **mette in pausa** automaticamente su `mouseenter` (desktop) e durante il touch (mobile, per consentire pinch-zoom del browser); riprende dopo 1.5s dal `touchend` o all'uscita del mouse.
+- Lazy loading: solo le prime 2 immagini sono `eager`, il resto `lazy`.
+
+**Vista Griglia**:
+- `row-cols-2/3/4/5` di celle quadrate (`ratio 1x1`, `object-fit-cover`).
+- Click su una cella → torna al carosello posizionato su quella foto (`bsCarousel.to(idx)`).
+- L'autoplay viene fermato finché si è in vista griglia.
+
+**Sistema audio**:
+- Coda dei brani mescolata casualmente (`Math.random` shuffle).
+- `ended` → brano successivo.
+- `error` → salta il brano (con contatore `errorStreak` per evitare loop infiniti su tutta la coda corrotta).
+- Volume iniziale 0.6; tutti i controlli sono nella toolbar (nessuna barra fissa che copra le foto).
 
 ## 🚀 Guida Rapida
 
@@ -55,43 +108,44 @@ Sistema di gallerie fotografiche completamente automatizzato con supporto audio,
 4. **Deploy automatico**:
    ```bash
    # Su Linux/Mac
-   ./bash/deploy.sh
+   ./bash/all.sh
 
    # Su Windows con Git Bash
-   & "C:\Program Files\Git\bin\bash.exe" bash/deploy.sh
+   & "C:\Program Files\Git\bin\bash.exe" bash/all.sh
    ```
 
 ## 🎵 Sistema Audio
 
 ### Funzionalità Audio
-- **Riproduzione automatica** di musica di sottofondo
-- **Controlli integrati** - Play/Pause, Volume, Skip
-- **Riproduzione casuale** - Cambia brano automaticamente
-- **Gestione errori** - Salta file corrotti automaticamente
+- **Riproduzione di sottofondo** all'apertura della galleria (se presenti file audio)
+- **Controlli compatti** integrati nella toolbar superiore (Play/Pause, Next, Volume)
+- **Riproduzione casuale** - coda mescolata all'avvio, brano successivo automatico al termine
+- **Gestione errori** - salta automaticamente i file non riproducibili
+- **Titolo brano** visibile nella toolbar (nascosto sotto breakpoint `lg` per non affollare la UI)
 
 ### Formati Supportati
 - MP3, WAV, OGG, M4A
 
 ### Controlli Audio
-- 🎵 **Play/Pause** - Avvia/ferma la riproduzione
-- 🔊 **Volume** - Slider per regolare il volume
-- ⏭️ **Skip** - Passa al brano successivo
-- 📱 **Mobile-friendly** - Controlli ottimizzati per touch
+- 🎵 **Play/Pause** - avvia/ferma il brano corrente
+- ⏭️ **Next** - passa al brano successivo nella coda mescolata
+- � **Volume** - slider (default 0.6)
 
 ## 🎠 Sistema Carosello
 
 ### Funzionalità Carosello
-- **Autoplay** - Cambio foto automatico ogni 4 secondi
-- **Navigazione** - Frecce prev/next, swipe su mobile
-- **Zoom mobile** - Pinch-to-zoom su dispositivi touch
-- **Contatore** - Mostra posizione corrente (es. "5/20")
-- **Lazy loading** - Caricamento ottimizzato delle immagini
+- **Autoplay configurabile** - toggle on/off + input numerico dei secondi (1–60, default 4)
+- **Navigazione** - frecce prev/next, swipe touch nativo Bootstrap
+- **Zoom mobile** - pinch-to-zoom del browser (l'autoplay si pausa durante il touch)
+- **Contatore** - posizione corrente (es. "5/37") in overlay in alto a destra
+- **Lazy loading** - le prime 2 immagini sono `eager`, il resto `lazy`
 
 ### Controlli Carosello
-- ⬅️➡️ **Frecce** - Navigazione manuale
-- 📱 **Swipe** - Scorri con il dito su mobile
-- 🔍 **Zoom** - Pinch-to-zoom su mobile
-- ⏸️ **Pausa hover** - Autoplay si ferma al passaggio del mouse
+- ⬅️➡️ **Frecce** - navigazione manuale
+- 📱 **Swipe** - scorri con il dito su mobile
+- 🔍 **Zoom** - pinch-to-zoom su mobile
+- ⏸️ **Pausa automatica** - su `mouseenter` (desktop) e durante il touch (mobile, ripresa dopo 1.5s)
+- ⚙️ **Toggle autoplay + intervallo** - direttamente nella toolbar, modificabili a runtime
 
 ## 🔲 Vista Griglia
 
@@ -133,9 +187,9 @@ Lo script `scan.sh` automatizza completamente la gestione delle gallerie:
    📋 Gallerie valide: 1
 ```
 
-### deploy.sh - Deploy Automatico
+### all.sh - Deploy Automatico
 
-Lo script `deploy.sh` automatizza il deployment con versioning:
+Lo script `bash/all.sh` automatizza il deployment con versioning incrementale:
 
 **Cosa fa:**
 - Rileva automaticamente le modifiche
@@ -167,7 +221,7 @@ Lo script `deploy.sh` automatizza il deployment con versioning:
 ### Deploy Automatico
 ```bash
 # Deploy con versioning automatico
-./bash/deploy.sh
+./bash/all.sh
 ```
 
 ### URL di Accesso
@@ -194,7 +248,7 @@ https://[username].github.io/[repository-name]/
 
 ### Script non funziona
 - **Su Windows**: Usa Git Bash invece di PowerShell
-- **Permessi**: Esegui `chmod +x bash/scan.sh bash/deploy.sh`
+- **Permessi**: Esegui `chmod +x bash/scan.sh bash/all.sh`
 - **Directory**: Assicurati di essere nella directory principale
 
 ### Gallerie non appaiono
@@ -224,7 +278,7 @@ mkdir "2025-09-23 nuovo evento"
 cd bash && ./scan.sh
 
 # 3. Deploy automatico
-./deploy.sh
+./bash/all.sh
 
 # 4. ✨ La nuova galleria è online!
 ```
@@ -237,7 +291,7 @@ cd bash && ./scan.sh
 cd bash && ./scan.sh
 
 # 3. Deploy modifiche
-./deploy.sh
+./bash/all.sh
 ```
 
 ## 🚀 Caratteristiche Avanzate
@@ -278,5 +332,3 @@ cd bash && ./scan.sh
 - **Audio**: MP3, WAV, OGG, M4A
 
 ---
-
-**Sviluppato con ❤️ per una gestione semplice e automatica delle gallerie fotografiche**

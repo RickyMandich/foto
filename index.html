@@ -1,526 +1,129 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-bs-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gallerie Fotografiche</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-        }
-
-        .main-container {
-            padding: 40px 0;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 300;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            padding: 20px 0;
-        }
-
-        .gallery-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .gallery-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s;
-        }
-
-        .gallery-card:hover::before {
-            left: 100%;
-        }
-
-        .gallery-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .gallery-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: #4fc3f7;
-            text-shadow: 0 0 20px rgba(79, 195, 247, 0.5);
-        }
-
-        .gallery-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: white;
-        }
-
-        .gallery-description {
-            opacity: 0.8;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .gallery-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #4fc3f7;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            color: white;
-            font-size: 18px;
-        }
-
-        .spinner-border {
-            margin-right: 15px;
-        }
-
-        .no-galleries {
-            text-align: center;
-            padding: 60px 20px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .no-galleries i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .gallery-download-btn {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-weight: 600;
-            color: white;
-            font-size: 14px;
-            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
-            transition: all 0.3s ease;
-            margin-top: 15px;
-            width: 100%;
-        }
-
-        .gallery-download-btn:hover {
-            background: linear-gradient(135deg, #218838, #1ea085);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
-            color: white;
-        }
-
-        .gallery-download-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .gallery-download-btn i {
-            margin-right: 8px;
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5rem;
-            }
-
-            .gallery-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .gallery-card {
-                padding: 25px;
-            }
-
-            .gallery-icon {
-                font-size: 3rem;
-            }
-
-            .gallery-download-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .gallery-card {
-                padding: 20px;
-            }
-
-            .gallery-title {
-                font-size: 1.3rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery Photo System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container main-container">
-        <div class="header">
-            <h1>
-                <i class="fas fa-camera-retro me-3"></i>
-                Le Mie Gallerie Fotografiche
-            </h1>
-            <p>Esplora le collezioni di foto organizzate per evento</p>
-        </div>
+<body class="bg-dark text-light min-vh-100">
 
-        <!-- Loading -->
-        <div id="loading" class="loading">
-            <div class="spinner-border text-light" role="status"></div>
-            Caricamento gallerie in corso...
-        </div>
-
-        <!-- Galleries Grid -->
-        <div id="galleriesGrid" class="gallery-grid" style="display: none;">
-            <!-- Le gallerie verranno inserite dinamicamente qui -->
-        </div>
-
-        <!-- No Galleries Message -->
-        <div id="noGalleries" class="no-galleries" style="display: none;">
-            <i class="fas fa-folder-open"></i>
-            <h3>Nessuna galleria trovata</h3>
-            <p>Non sono state trovate cartelle con foto nella directory corrente.</p>
-        </div>
+  <nav class="navbar bg-secondary mb-4">
+    <div class="container">
+      <span class="navbar-brand mb-0 h1">
+        <i class="fa-solid fa-camera-retro me-2"></i>Gallery Photo System
+      </span>
+      <span class="text-info small">
+        <i class="fa-solid fa-folder-open me-1"></i><span id="galleryCount">0</span> gallerie
+      </span>
     </div>
+  </nav>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script>
-        class GalleryIndex {
-            constructor() {
-                this.galleries = [];
-                this.init();
-            }
+  <main class="container pb-5">
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border" role="status"></div>
+      <p class="mt-3 text-info">Caricamento gallerie...</p>
+    </div>
+    <div id="error" class="alert alert-danger d-none" role="alert"></div>
+    <div id="galleries" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+  </main>
 
-            async init() {
-                try {
-                    await this.loadGalleries();
-                    this.renderGalleries();
-                    this.hideLoading();
-                } catch (error) {
-                    console.error('Errore durante il caricamento:', error);
-                    this.showNoGalleries();
-                }
-            }
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const enc = encodeURIComponent;
 
-            async loadGalleries() {
-                // Rileva automaticamente tutte le cartelle con photo.txt
-                const potentialFolders = await this.discoverFolders();
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
 
-                for (const dir of potentialFolders) {
-                    try {
-                        const photoCount = await this.countPhotosInDirectory(dir);
-                        if (photoCount > 0) {
-                            this.galleries.push({
-                                name: dir,
-                                displayName: this.formatDisplayName(dir),
-                                photoCount: photoCount,
-                                path: dir
-                            });
-                        }
-                    } catch (error) {
-                        console.log(`Errore nel controllare la directory ${dir}:`, error);
-                    }
-                }
+    function formatTitle(name) {
+      const m = name.match(/^(\d{4})[\s_-]+(\d{2})[\s_-]+(\d{2})\s*-\s*(.+)$/);
+      if (!m) return { date: '', rest: name };
+      return { date: `${m[3]}/${m[2]}/${m[1]}`, rest: m[4] };
+    }
 
-                if (this.galleries.length === 0) {
-                    throw new Error('Nessuna galleria trovata. Crea cartelle con foto e file photo.txt');
-                }
-            }
+    async function fetchLines(url) {
+      try {
+        const r = await fetch(url, { cache: 'no-cache' });
+        if (!r.ok) return [];
+        const t = await r.text();
+        return t.split('\n').map(s => s.trim()).filter(Boolean);
+      } catch { return []; }
+    }
 
-            async discoverFolders() {
-                // 🔍 RILEVAMENTO AUTOMATICO GALLERIE 🔍
-                // Legge l'elenco delle gallerie dal file gallery.txt generato automaticamente
+    async function loadGallery(name) {
+      const [photos, songs] = await Promise.all([
+        fetchLines(enc(name) + '/photo.txt'),
+        fetchLines(enc(name) + '/song.txt')
+      ]);
+      return { name, photos, songs };
+    }
 
-                try {
-                    // Prova a leggere il file gallery.txt
-                    const response = await fetch('gallery.txt');
-                    if (response.ok) {
-                        const galleryList = await response.text();
-                        const galleryFolders = galleryList.split('\n')
-                            .map(line => line.trim())
-                            .filter(line => line.length > 0);
+    function renderCard(g) {
+      const { date, rest } = formatTitle(g.name);
+      const safeRest = escapeHtml(rest);
+      const url = `gallery.html?g=${enc(g.name)}`;
+      const cover = g.photos.length
+        ? `${enc(g.name)}/${enc(g.photos[0])}`
+        : '';
+      const audioBadge = g.songs.length
+        ? `<span class="badge bg-info text-dark ms-1"><i class="fa-solid fa-music me-1"></i>${g.songs.length}</span>`
+        : '';
+      const coverHtml = cover
+        ? `<div class="ratio ratio-16x9">
+             <img src="${cover}" class="card-img-top object-fit-cover" alt="" loading="lazy">
+           </div>`
+        : `<div class="ratio ratio-16x9 bg-dark d-flex align-items-center justify-content-center">
+             <i class="fa-solid fa-image text-secondary fa-3x"></i>
+           </div>`;
+      return `
+        <div class="col">
+          <div class="card bg-secondary h-100 border-0 shadow position-relative">
+            ${coverHtml}
+            <div class="card-body">
+              <h5 class="card-title mb-1 text-capitalize">${safeRest}</h5>
+              <p class="card-text small text-info mb-2">
+                <i class="fa-regular fa-calendar me-1"></i>${date}
+              </p>
+              <span class="badge bg-dark"><i class="fa-solid fa-images me-1"></i>${g.photos.length} foto</span>
+              ${audioBadge}
+            </div>
+            <a href="${url}" class="stretched-link" aria-label="Apri ${safeRest}"></a>
+          </div>
+        </div>`;
+    }
 
-                        console.log(`📋 Trovate ${galleryFolders.length} gallerie in gallery.txt:`, galleryFolders);
+    (async () => {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const containerEl = document.getElementById('galleries');
+      const countEl = document.getElementById('galleryCount');
 
-                        const foundFolders = [];
+      const galleryNames = await fetchLines('gallery.txt');
+      if (!galleryNames.length) {
+        loadingEl.classList.add('d-none');
+        errorEl.innerHTML = 'Nessuna galleria trovata. Esegui <code>bash/scan.sh</code> per generarle.';
+        errorEl.classList.remove('d-none');
+        return;
+      }
 
-                        // Verifica che ogni cartella abbia effettivamente photo.txt
-                        for (const folder of galleryFolders) {
-                            try {
-                                const photoResponse = await fetch(`${folder}/photo.txt`, { method: 'HEAD' });
-                                if (photoResponse.ok) {
-                                    foundFolders.push(folder);
-                                } else {
-                                    console.log(`⚠️ Cartella ${folder} in gallery.txt ma senza photo.txt valido`);
-                                }
-                            } catch (error) {
-                                console.log(`❌ Errore verifica cartella ${folder}:`, error);
-                            }
-                        }
+      const galleries = await Promise.all(galleryNames.map(loadGallery));
+      const valid = galleries.filter(g => g.photos.length > 0);
 
-                        return foundFolders;
-                    }
-                } catch (error) {
-                    console.log('⚠️ File gallery.txt non trovato, uso configurazione manuale di fallback');
-                }
+      loadingEl.classList.add('d-none');
+      countEl.textContent = valid.length;
 
-                // 🔄 FALLBACK: Configurazione manuale (se gallery.txt non esiste)
-                console.log('📁 Usando configurazione manuale di fallback');
-                const fallbackFolders = [];
+      if (!valid.length) {
+        errorEl.textContent = 'Nessuna galleria contiene foto.';
+        errorEl.classList.remove('d-none');
+        return;
+      }
 
-                const foundFolders = [];
-
-                // Controlla ogni cartella configurata manualmente
-                for (const folder of fallbackFolders) {
-                    try {
-                        const response = await fetch(`${folder}/photo.txt`, { method: 'HEAD' });
-                        if (response.ok) {
-                            foundFolders.push(folder);
-                        }
-                    } catch (error) {
-                        console.log(`Cartella ${folder} non trovata o senza photo.txt`);
-                    }
-                }
-
-                return foundFolders;
-            }
-
-            formatDisplayName(dirName) {
-                return dirName
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ') || 'Galleria Senza Nome';
-            }
-
-
-
-            async countPhotosInDirectory(dirPath) {
-                try {
-                    const response = await fetch(`${dirPath}/photo.txt`);
-                    if (!response.ok) {
-                        return 0;
-                    }
-
-                    const fileList = await response.text();
-                    const files = fileList.split('\n')
-                        .map(line => line.trim())
-                        .filter(line => line.length > 0);
-
-                    const excludeFiles = ['index.htm', 'index.html', 'photo.txt', 'song.txt'];
-                    const supportedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.JPG', '.JPEG', '.PNG', '.GIF', '.WEBP'];
-
-                    return files.filter(fileName => {
-                        if (excludeFiles.includes(fileName)) {
-                            return false;
-                        }
-                        return supportedExtensions.some(ext => fileName.endsWith(ext));
-                    }).length;
-                } catch (error) {
-                    return 0;
-                }
-            }
-
-
-
-            renderGalleries() {
-                const grid = document.getElementById('galleriesGrid');
-                grid.innerHTML = '';
-
-                this.galleries.forEach((gallery, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'gallery-card';
-                    card.innerHTML = `
-                        <div class="gallery-icon">
-                            <i class="fas fa-images"></i>
-                        </div>
-                        <div class="gallery-title">${gallery.displayName}</div>
-                        <div class="gallery-description">
-                            Collezione fotografica con ${gallery.photoCount} immagini
-                        </div>
-                        <div class="gallery-stats">
-                            <div class="stat-item">
-                                <div class="stat-number">${gallery.photoCount}</div>
-                                <div class="stat-label">Foto</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-number"><i class="fas fa-eye"></i></div>
-                                <div class="stat-label">Visualizza</div>
-                            </div>
-                        </div>
-                        <button class="gallery-download-btn" data-gallery-index="${index}">
-                            <i class="fas fa-download"></i>
-                            <span class="download-text">Scarica ZIP</span>
-                        </button>
-                    `;
-
-                    // Click sulla card (escluso il pulsante download)
-                    card.addEventListener('click', (e) => {
-                        if (!e.target.closest('.gallery-download-btn')) {
-                            window.location.href = `gallery.html?folder=${encodeURIComponent(gallery.path)}`;
-                        }
-                    });
-
-                    // Click sul pulsante download
-                    const downloadBtn = card.querySelector('.gallery-download-btn');
-                    downloadBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.downloadGalleryZip(index);
-                    });
-
-                    grid.appendChild(card);
-                });
-
-                grid.style.display = 'grid';
-            }
-
-            hideLoading() {
-                document.getElementById('loading').style.display = 'none';
-            }
-
-            showNoGalleries() {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('noGalleries').style.display = 'block';
-            }
-
-            async downloadGalleryZip(galleryIndex) {
-                const gallery = this.galleries[galleryIndex];
-                const downloadBtn = document.querySelector(`[data-gallery-index="${galleryIndex}"]`);
-                const downloadText = downloadBtn.querySelector('.download-text');
-
-                // Disabilita il pulsante
-                downloadBtn.disabled = true;
-                downloadText.textContent = 'Preparazione...';
-
-                try {
-                    const zip = new JSZip();
-                    let processedPhotos = 0;
-
-                    // Carica la lista delle foto
-                    const response = await fetch(`${gallery.path}/photo.txt`);
-                    const listText = await response.text();
-                    const photoFiles = listText.trim().split('\n').filter(file => file.trim());
-
-                    // Scarica ogni foto
-                    for (const photoFile of photoFiles) {
-                        try {
-                            processedPhotos++;
-                            downloadText.textContent = `${processedPhotos}/${photoFiles.length}`;
-
-                            const photoResponse = await fetch(`${gallery.path}/${photoFile.trim()}`);
-                            const photoBlob = await photoResponse.blob();
-
-                            zip.file(photoFile.trim(), photoBlob);
-
-                        } catch (error) {
-                            console.error(`Errore scaricando ${photoFile}:`, error);
-                        }
-                    }
-
-                    // Genera e scarica il ZIP
-                    downloadText.textContent = 'Creazione ZIP...';
-                    const zipBlob = await zip.generateAsync({type: 'blob'});
-
-                    // Crea nome file sanitizzato
-                    const fileName = gallery.name.replace(/[<>:"/\\|?*]/g, '_') + '.zip';
-
-                    // Crea link per download
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(zipBlob);
-                    link.download = fileName;
-                    link.style.display = 'none';
-
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    // Feedback successo
-                    downloadText.innerHTML = '<i class="fas fa-check"></i> Completato!';
-
-                    setTimeout(() => {
-                        downloadText.textContent = 'Scarica ZIP';
-                        downloadBtn.disabled = false;
-                    }, 3000);
-
-                } catch (error) {
-                    console.error('Errore durante il download:', error);
-                    downloadText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Errore';
-
-                    setTimeout(() => {
-                        downloadText.textContent = 'Scarica ZIP';
-                        downloadBtn.disabled = false;
-                    }, 3000);
-                }
-            }
-        }
-
-        // Inizializza l'index quando la pagina è caricata
-        document.addEventListener('DOMContentLoaded', () => {
-            new GalleryIndex();
-        });
-    </script>
+      containerEl.innerHTML = valid.map(renderCard).join('');
+    })();
+  </script>
 </body>
 </html>
