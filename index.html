@@ -104,7 +104,10 @@
                 <span class="badge bg-dark"><i class="fa-solid fa-images me-1"></i>${g.photos.length} foto</span>
                 ${audioBadge}
               </div>
-              <div class="mt-auto" data-zip-url="${zipUrl}"></div>
+              <div class="mt-auto"
+                   data-zip-url="${zipUrl}"
+                   data-gallery-name="${escapeHtml(g.name)}"
+                   data-photo-count="${g.photos.length}"></div>
             </div>
           </div>
         </div>`;
@@ -114,17 +117,95 @@
       const slots = document.querySelectorAll('[data-zip-url]');
       await Promise.all([...slots].map(async slot => {
         const url = slot.dataset.zipUrl;
+        const name = slot.dataset.galleryName;
+        const count = +slot.dataset.photoCount || 0;
         try {
           const r = await fetch(url, { method: 'HEAD' });
-          if (!r.ok) return;
-          const len = +r.headers.get('Content-Length') || 0;
-          const sizeLabel = len ? ` <span class="text-info">(${formatBytes(len)})</span>` : '';
-          slot.innerHTML =
-            `<a href="${url}" download class="btn btn-sm btn-outline-info w-100">
-               <i class="fa-solid fa-file-zipper me-1"></i>Scarica ZIP${sizeLabel}
-             </a>`;
+          if (r.ok) {
+            const len = +r.headers.get('Content-Length') || 0;
+            const sizeLabel = len ? ` <span class="text-info">(${formatBytes(len)})</span>` : '';
+            slot.innerHTML =
+              `<a href="${url}" download class="btn btn-sm btn-outline-info w-100">
+                 <i class="fa-solid fa-file-zipper me-1"></i>Scarica ZIP${sizeLabel}
+               </a>`;
+            return;
+          }
         } catch {}
+        slot.innerHTML =
+          `<button type="button" class="btn btn-sm btn-outline-warning w-100"
+                   data-generate-zip data-gallery-name="${escapeHtml(name)}">
+             <i class="fa-solid fa-bolt me-1"></i>Genera ZIP <span class="text-info">(${count} foto)</span>
+           </button>`;
       }));
+    }
+
+    function loadJSZip() {
+      if (window.JSZip) return Promise.resolve(window.JSZip);
+      if (window._jszipPromise) return window._jszipPromise;
+      window._jszipPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+        s.onload = () => resolve(window.JSZip);
+        s.onerror = () => reject(new Error('JSZip non caricato'));
+        document.head.appendChild(s);
+      });
+      return window._jszipPromise;
+    }
+
+    async function generateZipClientSide(btn, galleryName) {
+      const original = btn.innerHTML;
+      const setLabel = html => btn.innerHTML = html;
+      btn.disabled = true;
+      setLabel('<span class="spinner-border spinner-border-sm me-1"></span>Preparazione...');
+      try {
+        const JSZipLib = await loadJSZip();
+        const photos = await fetchLines(`${enc(galleryName)}/photo.txt`);
+        if (!photos.length) throw new Error('Nessuna foto');
+
+        let estimate = 0;
+        try {
+          const r = await fetch(`${enc(galleryName)}/${enc(photos[0])}`, { method: 'HEAD' });
+          estimate = (+r.headers.get('Content-Length') || 0) * photos.length;
+        } catch {}
+        if (estimate > 500 * 1024 * 1024) {
+          const ok = confirm(`Lo ZIP stimato è ~${formatBytes(estimate)}. Operazione lunga e usa molta RAM del browser. Continuare?`);
+          if (!ok) { setLabel(original); btn.disabled = false; return; }
+        }
+
+        const zip = new JSZipLib();
+        let done = 0;
+        let cursor = 0;
+        const concurrency = 6;
+        const worker = async () => {
+          while (true) {
+            const i = cursor++;
+            if (i >= photos.length) return;
+            try {
+              const r = await fetch(`${enc(galleryName)}/${enc(photos[i])}`);
+              if (r.ok) zip.file(photos[i], await r.blob());
+            } catch {}
+            done++;
+            setLabel(`<span class="spinner-border spinner-border-sm me-1"></span>${done}/${photos.length}`);
+          }
+        };
+        await Promise.all(Array.from({ length: concurrency }, worker));
+
+        setLabel('<span class="spinner-border spinner-border-sm me-1"></span>Compressione...');
+        const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${galleryName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+
+        setLabel(original);
+        btn.disabled = false;
+      } catch (e) {
+        setLabel('<i class="fa-solid fa-triangle-exclamation me-1"></i>Errore');
+        setTimeout(() => { setLabel(original); btn.disabled = false; }, 3000);
+      }
     }
 
     (async () => {
@@ -154,6 +235,11 @@
       }
 
       containerEl.innerHTML = valid.map(renderCard).join('');
+      containerEl.addEventListener('click', e => {
+        const btn = e.target.closest('[data-generate-zip]');
+        if (!btn) return;
+        generateZipClientSide(btn, btn.dataset.galleryName);
+      });
       hydrateZipButtons();
     })();
   </script>

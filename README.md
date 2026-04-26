@@ -48,7 +48,9 @@ Il sito è una **SPA statica a due pagine** scritta solo con HTML + Bootstrap 5.
    - **Cover** = prima foto della galleria (`ratio 16x9`, `object-fit-cover`, `loading="lazy"`), cliccabile verso `gallery.html?g=<nome-galleria>`.
    - **Titolo** parsato dal nome cartella (`YYYY MM DD - descrizione` → `descrizione` + data `DD/MM/YYYY`), anch'esso link.
    - **Badge** con numero foto e numero brani audio.
-   - **Bottone "Scarica ZIP"** popolato in modo asincrono: viene fatta una `HEAD` su `<galleria>/photos.zip`; se risponde 200 il bottone appare con la dimensione formattata (KB/MB/GB) letta da `Content-Length`. Se lo zip non esiste (galleria troppo grande, vedi `scan.sh`), il bottone semplicemente non viene mostrato.
+   - **Bottone ZIP** popolato in modo asincrono via `HEAD` su `<galleria>/photos.zip`:
+     - **ZIP precompilato disponibile** (≤ 95 MB, generato da `scan.sh`) → bottone "Scarica ZIP" `btn-outline-info` con dimensione formattata letta da `Content-Length`. Link diretto, download istantaneo.
+     - **ZIP non disponibile** (galleria > 95 MB, oltre il limite di GitHub Pages) → bottone "Genera ZIP (N foto)" `btn-outline-warning`. Al click parte una **generazione client-side** con [JSZip](https://stuk.github.io/jszip/) caricato lazy da CDN: HEAD sulla prima foto per stimare la dimensione, eventuale `confirm()` se > 500 MB, fetch parallelo (concorrenza 6) di tutte le foto, modalità STORE (no compression, JPG già compresso), download del blob via `<a download>`. Il bottone mostra il progress (`spinner + n/totale`) durante l'operazione. Errore singolo file = skip silenzioso.
 5. Stati gestiti: spinner di caricamento, alert di errore se `gallery.txt` manca o non ci sono foto.
 
 ### `gallery.html` — Visualizzatore
