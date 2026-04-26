@@ -32,9 +32,13 @@
         <i id="autoplayIcon" class="fa-solid fa-pause"></i>
       </label>
       <input type="number" id="intervalInput"
-             class="form-control form-control-sm bg-dark text-light border-secondary"
+             class="form-control form-control-sm bg-dark text-light border-secondary me-1"
              value="4" min="1" max="60" step="1" style="width:4.5rem;"
              title="Secondi tra una foto e l'altra">
+      <a id="downloadPhoto" class="btn btn-sm btn-outline-light" download
+         href="#" title="Scarica foto corrente">
+        <i class="fa-solid fa-download"></i>
+      </a>
     </div>
 
     <div id="audioControls" class="d-flex align-items-center flex-shrink-0 d-none">
@@ -140,6 +144,13 @@
       history.replaceState(null, '', url);
     }
 
+    function updateDownloadLink(idx) {
+      if (!photos[idx]) return;
+      const a = document.getElementById('downloadPhoto');
+      a.href = galleryPath + '/' + enc(photos[idx]);
+      a.setAttribute('download', photos[idx]);
+    }
+
     (async () => {
       [photos, songs] = await Promise.all([
         fetchLines(galleryPath + '/photo.txt'),
@@ -185,9 +196,11 @@
       el.addEventListener('slid.bs.carousel', e => {
         document.getElementById('counter').textContent = `${e.to + 1}/${photos.length}`;
         updateUrl(e.to);
+        updateDownloadLink(e.to);
       });
       document.getElementById('counter').textContent = `${initialIndex + 1}/${photos.length}`;
       updateUrl(initialIndex);
+      updateDownloadLink(initialIndex);
     }
 
     function buildGrid() {

@@ -62,38 +62,69 @@
       return { name, photos, songs };
     }
 
+    function formatBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(0) + ' KB';
+      if (b < 1024 * 1024 * 1024) return (b / 1024 / 1024).toFixed(1) + ' MB';
+      return (b / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    }
+
     function renderCard(g) {
       const { date, rest } = formatTitle(g.name);
       const safeRest = escapeHtml(rest);
-      const url = `gallery.html?g=${enc(g.name)}`;
-      const cover = g.photos.length
-        ? `${enc(g.name)}/${enc(g.photos[0])}`
-        : '';
+      const galleryUrl = `gallery.html?g=${enc(g.name)}`;
+      const zipUrl = `${enc(g.name)}/photos.zip`;
+      const cover = g.photos.length ? `${enc(g.name)}/${enc(g.photos[0])}` : '';
       const audioBadge = g.songs.length
         ? `<span class="badge bg-info text-dark ms-1"><i class="fa-solid fa-music me-1"></i>${g.songs.length}</span>`
         : '';
       const coverHtml = cover
-        ? `<div class="ratio ratio-16x9">
-             <img src="${cover}" class="card-img-top object-fit-cover" alt="" loading="lazy">
-           </div>`
-        : `<div class="ratio ratio-16x9 bg-dark d-flex align-items-center justify-content-center">
-             <i class="fa-solid fa-image text-secondary fa-3x"></i>
-           </div>`;
+        ? `<a href="${galleryUrl}" class="d-block" aria-label="Apri ${safeRest}">
+             <div class="ratio ratio-16x9">
+               <img src="${cover}" class="card-img-top object-fit-cover" alt="" loading="lazy">
+             </div>
+           </a>`
+        : `<a href="${galleryUrl}" class="d-block" aria-label="Apri ${safeRest}">
+             <div class="ratio ratio-16x9 bg-dark d-flex align-items-center justify-content-center">
+               <i class="fa-solid fa-image text-secondary fa-3x"></i>
+             </div>
+           </a>`;
       return `
         <div class="col">
-          <div class="card bg-secondary h-100 border-0 shadow position-relative">
+          <div class="card bg-secondary h-100 border-0 shadow">
             ${coverHtml}
-            <div class="card-body">
-              <h5 class="card-title mb-1 text-capitalize">${safeRest}</h5>
+            <div class="card-body d-flex flex-column">
+              <a href="${galleryUrl}" class="text-decoration-none text-light">
+                <h5 class="card-title mb-1 text-capitalize">${safeRest}</h5>
+              </a>
               <p class="card-text small text-info mb-2">
                 <i class="fa-regular fa-calendar me-1"></i>${date}
               </p>
-              <span class="badge bg-dark"><i class="fa-solid fa-images me-1"></i>${g.photos.length} foto</span>
-              ${audioBadge}
+              <div class="mb-2">
+                <span class="badge bg-dark"><i class="fa-solid fa-images me-1"></i>${g.photos.length} foto</span>
+                ${audioBadge}
+              </div>
+              <div class="mt-auto" data-zip-url="${zipUrl}"></div>
             </div>
-            <a href="${url}" class="stretched-link" aria-label="Apri ${safeRest}"></a>
           </div>
         </div>`;
+    }
+
+    async function hydrateZipButtons() {
+      const slots = document.querySelectorAll('[data-zip-url]');
+      await Promise.all([...slots].map(async slot => {
+        const url = slot.dataset.zipUrl;
+        try {
+          const r = await fetch(url, { method: 'HEAD' });
+          if (!r.ok) return;
+          const len = +r.headers.get('Content-Length') || 0;
+          const sizeLabel = len ? ` <span class="text-info">(${formatBytes(len)})</span>` : '';
+          slot.innerHTML =
+            `<a href="${url}" download class="btn btn-sm btn-outline-info w-100">
+               <i class="fa-solid fa-file-zipper me-1"></i>Scarica ZIP${sizeLabel}
+             </a>`;
+        } catch {}
+      }));
     }
 
     (async () => {
@@ -123,6 +154,7 @@
       }
 
       containerEl.innerHTML = valid.map(renderCard).join('');
+      hydrateZipButtons();
     })();
   </script>
 </body>

@@ -26,7 +26,9 @@ Sistema di gallerie fotografiche completamente automatizzato con supporto audio,
     ├── *.JPG               # File foto (JPG, PNG, WEBP, etc.)
     ├── *.mp3               # File audio opzionali
     ├── photo.txt           # Lista foto (generato automaticamente)
-    └── song.txt            # Lista audio (generato automaticamente)
+    ├── song.txt            # Lista audio (generato automaticamente)
+    ├── photos.zip          # ZIP delle sole foto (generato se ≤ 95 MB)
+    └── photos.zip.hash     # Hash di stato per rigenerare lo zip solo se necessario
 ```
 
 ## 🧠 Logica del Sito
@@ -43,10 +45,10 @@ Il sito è una **SPA statica a due pagine** scritta solo con HTML + Bootstrap 5.
 2. Per ogni galleria fa fetch in parallelo di `<galleria>/photo.txt` e `<galleria>/song.txt` per ottenere i conteggi.
 3. Filtra le gallerie senza foto.
 4. Renderizza una griglia di card (`row-cols-1/2/3`):
-   - **Cover** = prima foto della galleria (`ratio 16x9`, `object-fit-cover`, `loading="lazy"`).
-   - **Titolo** parsato dal nome cartella (`YYYY MM DD - descrizione` → `descrizione` + data `DD/MM/YYYY`).
+   - **Cover** = prima foto della galleria (`ratio 16x9`, `object-fit-cover`, `loading="lazy"`), cliccabile verso `gallery.html?g=<nome-galleria>`.
+   - **Titolo** parsato dal nome cartella (`YYYY MM DD - descrizione` → `descrizione` + data `DD/MM/YYYY`), anch'esso link.
    - **Badge** con numero foto e numero brani audio.
-   - L'intera card è cliccabile (`stretched-link`) verso `gallery.html?g=<nome-galleria>`.
+   - **Bottone "Scarica ZIP"** popolato in modo asincrono: viene fatta una `HEAD` su `<galleria>/photos.zip`; se risponde 200 il bottone appare con la dimensione formattata (KB/MB/GB) letta da `Content-Length`. Se lo zip non esiste (galleria troppo grande, vedi `scan.sh`), il bottone semplicemente non viene mostrato.
 5. Stati gestiti: spinner di caricamento, alert di errore se `gallery.txt` manca o non ci sono foto.
 
 ### `gallery.html` — Visualizzatore
@@ -61,6 +63,7 @@ Riceve il nome galleria via query string `?g=<nome>` (decodificato con `decodeUR
 - Controlli autoplay (visibili solo in vista Carosello):
   - **Toggle autoplay** on/off (icona pause/play).
   - **Input numerico** in secondi tra una foto e l'altra (1–60, default 4).
+  - **Bottone download foto corrente** (`<a download>` con `href` aggiornato a ogni `slid.bs.carousel`): scarica direttamente il file originale full-res della foto attualmente visualizzata.
 - Controlli audio (visibili solo se la galleria ha brani):
   - Play/Pause, Next, slider Volume, titolo brano corrente (nascosto sotto `lg`).
 
@@ -165,8 +168,19 @@ Lo script `scan.sh` automatizza completamente la gestione delle gallerie:
 - Scansiona tutte le cartelle del progetto
 - Genera `photo.txt` per ogni cartella con foto
 - Genera `song.txt` per ogni cartella con audio
+- Genera/aggiorna `photos.zip` con le sole foto (vedi sotto)
 - Crea `gallery.txt` con l'elenco delle gallerie valide
 - Mostra statistiche complete
+
+**Generazione `photos.zip`:**
+- Variabile `MAX_ZIP_SIZE_MB` (default **95 MB**, sotto al limite hard di 100 MB di GitHub).
+- Calcola la dimensione totale delle foto della cartella:
+  - **se > 95 MB** → lo zip **non viene generato**, eventuale `photos.zip`/`photos.zip.hash` precedente viene rimosso, viene loggato un warning. L'`index.html` di conseguenza non mostrerà il bottone download per quella galleria.
+  - **se ≤ 95 MB** → calcola un **hash di stato** con `nome|size|mtime` di ogni foto (sha1 troncato a 16 char) e lo confronta con `photos.zip.hash`:
+    - hash invariato → zip già aggiornato, skip rigenerazione.
+    - hash diverso o zip mancante → rigenera `photos.zip` (modalità STORE, niente compressione perché su JPG è inutile).
+- Tool di compressione: prova `zip -0 -@`; in fallback usa `python -m zipfile` (`python3` o `python`). Se nessuno è disponibile lo zip non viene creato e viene loggato un errore.
+- Il file `photos.zip` viene committato dal repo (necessario per essere scaricabile via GitHub Pages).
 
 **Output esempio:**
 ```
@@ -175,6 +189,9 @@ Lo script `scan.sh` automatizza completamente la gestione delle gallerie:
 📁 Processando: 2025-09-20 corteo per gaza (blocco della vempa)
 ✅ Trovate 150 immagini → photo.txt
 ✅ Trovati 3 file audio → song.txt
+📦 Verifica photos.zip...
+📦 Generazione photos.zip (78MB)...
+✅ photos.zip generato
 📊 Cartella completata: 150 foto, 3 audio
 
 📝 Generazione gallery.txt...
@@ -185,6 +202,7 @@ Lo script `scan.sh` automatizza completamente la gestione delle gallerie:
    📸 Foto totali: 150
    🎵 File audio totali: 3
    📋 Gallerie valide: 1
+   📦 ZIP disponibili: 1 (saltati per dimensione: 0)
 ```
 
 ### all.sh - Deploy Automatico
