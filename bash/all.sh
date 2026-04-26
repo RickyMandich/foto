@@ -22,6 +22,21 @@ if [[ ! -d ".git" ]]; then
     exit 1
 fi
 
+# Esegui scan.sh per aggiornare photo.txt/song.txt/gallery.txt e gli zip
+SCAN_SCRIPT="$(dirname "$0")/scan.sh"
+if [[ -f "$SCAN_SCRIPT" ]]; then
+    echo -e "${BLUE}🔄 Esecuzione scan.sh...${NC}"
+    bash "$SCAN_SCRIPT"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}❌ Errore durante scan.sh, deploy interrotto${NC}"
+        exit 1
+    fi
+    echo ""
+    echo "=================================================================="
+else
+    echo -e "${YELLOW}⚠️  scan.sh non trovato in ${SCAN_SCRIPT}, salto la scansione${NC}"
+fi
+
 # Verifica se ci sono modifiche da committare
 echo -e "${BLUE}🔍 Controllo modifiche...${NC}"
 if git diff --quiet && git diff --staged --quiet; then

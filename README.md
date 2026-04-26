@@ -95,20 +95,7 @@ Riceve il nome galleria via query string `?g=<nome>` (decodificato con `decodeUR
    # Aggiungi foto e file audio nella cartella...
    ```
 
-2. **Esegui scansione automatica**:
-   ```bash
-   # Su Linux/Mac
-   cd bash && ./scan.sh
-
-   # Su Windows con Git Bash
-   cd bash && & "C:\Program Files\Git\bin\bash.exe" ./scan.sh
-   ```
-
-3. **✨ FATTO!** - Nessuna configurazione manuale necessaria
-   - Lo script genera automaticamente `gallery.txt`
-   - L'homepage rileva automaticamente le nuove gallerie
-
-4. **Deploy automatico**:
+2. **Deploy automatico** (esegue scansione + commit + push):
    ```bash
    # Su Linux/Mac
    ./bash/all.sh
@@ -116,6 +103,10 @@ Riceve il nome galleria via query string `?g=<nome>` (decodificato con `decodeUR
    # Su Windows con Git Bash
    & "C:\Program Files\Git\bin\bash.exe" bash/all.sh
    ```
+
+   `bash/all.sh` invoca internamente `bash/scan.sh`, quindi `photo.txt`, `song.txt`, `gallery.txt` e `photos.zip` vengono rigenerati automaticamente prima del commit. Nessuna configurazione manuale necessaria.
+
+   > Per una sola scansione senza deploy puoi comunque lanciare `bash/scan.sh` standalone.
 
 ## 🎵 Sistema Audio
 
@@ -210,11 +201,14 @@ Lo script `scan.sh` automatizza completamente la gestione delle gallerie:
 Lo script `bash/all.sh` automatizza il deployment con versioning incrementale:
 
 **Cosa fa:**
+- Esegue automaticamente `scan.sh` come primo step (genera/aggiorna `photo.txt`, `song.txt`, `gallery.txt`, `photos.zip` e `photos.zip.hash`). Se `scan.sh` esce con errore il deploy viene interrotto.
 - Rileva automaticamente le modifiche
 - Calcola la versione incrementale
 - Crea commit con messaggio standardizzato
 - Effettua push su GitHub
 - Mostra statistiche del deploy
+
+> Non serve più lanciare `bash/scan.sh` manualmente prima di `bash/all.sh`: l'esecuzione è incatenata.
 
 **Output esempio:**
 ```
@@ -292,23 +286,17 @@ https://[username].github.io/[repository-name]/
 mkdir "2025-09-23 nuovo evento"
 # Aggiungi foto e file audio...
 
-# 2. Scansione automatica
-cd bash && ./scan.sh
-
-# 3. Deploy automatico
+# 2. Deploy automatico (esegue scan.sh + commit + push)
 ./bash/all.sh
 
-# 4. ✨ La nuova galleria è online!
+# 3. ✨ La nuova galleria è online!
 ```
 
 ### Aggiornare Galleria Esistente
 ```bash
 # 1. Aggiungi/rimuovi foto dalla cartella
 
-# 2. Rigenera file di configurazione
-cd bash && ./scan.sh
-
-# 3. Deploy modifiche
+# 2. Deploy modifiche (la scansione è automatica)
 ./bash/all.sh
 ```
 
