@@ -16,9 +16,75 @@ total_folders=0
 processed_folders=0
 total_photos=0
 total_songs=0
+total_zips=0
+skipped_zips=0
+
+# Limite GitHub: 100MB hard. Lasciamo margine.
+MAX_ZIP_SIZE_MB=95
 
 # Array per memorizzare le cartelle con foto
 galleries_with_photos=()
+
+# Calcola dimensione di un file in modo cross-platform (Linux/Mac/Git Bash)
+file_size() {
+    stat -c%s "$1" 2>/dev/null || stat -f%z "$1" 2>/dev/null || echo 0
+}
+
+# Genera (o rigenera) photos.zip nella cartella corrente se necessario.
+# Deve essere chiamata DA DENTRO la cartella della galleria, dopo aver scritto photo.txt.
+generate_zip_if_needed() {
+    local total_bytes=0
+    local size
+    while IFS= read -r f; do
+        [[ -f "$f" ]] || continue
+        size=$(file_size "$f")
+        ((total_bytes += size))
+    done < photo.txt
+
+    local total_mb=$((total_bytes / 1024 / 1024))
+    local max_bytes=$((MAX_ZIP_SIZE_MB * 1024 * 1024))
+
+    if (( total_bytes > max_bytes )); then
+        echo -e "${YELLOW}⚠️  Foto totali ${total_mb}MB > ${MAX_ZIP_SIZE_MB}MB: zip non generato (limite GitHub)${NC}"
+        rm -f photos.zip photos.zip.hash
+        ((skipped_zips++))
+        return
+    fi
+
+    # Hash di stato basato su nome+size+mtime di ogni foto
+    local current_hash
+    current_hash=$(while IFS= read -r f; do
+        [[ -f "$f" ]] || continue
+        stat -c "%n|%s|%Y" "$f" 2>/dev/null || stat -f "%N|%z|%m" "$f" 2>/dev/null
+    done < photo.txt | sort | sha1sum | cut -c1-16)
+
+    local stored_hash=""
+    [[ -f photos.zip.hash ]] && stored_hash=$(cat photos.zip.hash 2>/dev/null)
+
+    if [[ -f photos.zip && "$stored_hash" == "$current_hash" ]]; then
+        echo -e "${GREEN}✅ photos.zip già aggiornato (${total_mb}MB)${NC}"
+        ((total_zips++))
+        return
+    fi
+
+    echo -e "${BLUE}📦 Generazione photos.zip (${total_mb}MB)...${NC}"
+    rm -f photos.zip
+
+    if command -v zip >/dev/null 2>&1; then
+        zip -q -0 photos.zip -@ < photo.txt
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import zipfile; z=zipfile.ZipFile('photos.zip','w',zipfile.ZIP_STORED); [z.write(l.strip()) for l in open('photo.txt') if l.strip()]; z.close()"
+    elif command -v python >/dev/null 2>&1; then
+        python -c "import zipfile; z=zipfile.ZipFile('photos.zip','w',zipfile.ZIP_STORED); [z.write(l.strip()) for l in open('photo.txt') if l.strip()]; z.close()"
+    else
+        echo -e "${RED}❌ Né 'zip' né 'python' trovati: impossibile creare lo zip${NC}"
+        return 1
+    fi
+
+    echo "$current_hash" > photos.zip.hash
+    echo -e "${GREEN}✅ photos.zip generato${NC}"
+    ((total_zips++))
+}
 
 echo -e "${BLUE}🔍 Gallery Scanner - Generazione automatica photo.txt e song.txt${NC}"
 echo "=================================================================="
@@ -98,7 +164,13 @@ process_folder() {
         rm song.txt
         echo -e "${YELLOW}⚠️  Nessun file audio trovato${NC}"
     fi
-    
+
+    # Genera/aggiorna photos.zip se ci sono foto
+    if [[ -s photo.txt ]]; then
+        echo -e "${BLUE}📦 Verifica photos.zip...${NC}"
+        generate_zip_if_needed
+    fi
+
     # Aggiorna contatori globali
     ((total_photos += photos_found))
     ((total_songs += songs_found))
@@ -157,6 +229,7 @@ main() {
     echo -e "   🖼️  Immagini totali: ${GREEN}${total_photos}${NC}"
     echo -e "   🎵 File audio totali: ${GREEN}${total_songs}${NC}"
     echo -e "   📋 Gallerie con foto: ${GREEN}${#galleries_with_photos[@]}${NC}"
+    echo -e "   📦 ZIP disponibili: ${GREEN}${total_zips}${NC} (saltati per dimensione: ${YELLOW}${skipped_zips}${NC})"
     echo ""
     
     if [[ $processed_folders -eq $total_folders ]]; then
