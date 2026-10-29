@@ -6,9 +6,15 @@
     'ogType' => 'website',
     'canonical' => null,
     'app' => false,   // true: pagina "a tutto schermo" senza header e footer (pagina galleria)
+    'fullscreen' => false,
 ])
+@php
+    // In Laravel, $app is automatically shared to all views as the Application container instance.
+    // We therefore only consider it "app mode" if explicitly passed as boolean true, or via $fullscreen.
+    $isApp = $fullscreen || (is_bool($app) && $app);
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -39,27 +45,27 @@
     @isset($head){{ $head }}@endisset
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-full {{ $app ? 'h-dvh overflow-hidden flex flex-col' : '' }}">
+<body class="min-h-full {{ $isApp ? 'h-dvh overflow-hidden flex flex-col' : '' }}">
     <a href="#contenuto" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-neutral-900 focus:p-3">Vai al contenuto</a>
 
-    @unless ($app)
+    @if (! $isApp)
         <header class="border-b border-neutral-800 bg-neutral-900/60">
             <nav class="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3" aria-label="Principale">
                 <a href="{{ route('home') }}" class="text-lg font-semibold text-neutral-100">{{ config('app.name') }}</a>
-                <a href="{{ route('home') }}" class="text-sm">Eventi</a>
-                <a href="{{ route('authors.index') }}" class="text-sm">Autori</a>
+                <a href="{{ route('home') }}" class="text-sm text-neutral-400 hover:text-neutral-100 transition-colors">Eventi</a>
+                <a href="{{ route('authors.index') }}" class="text-sm text-neutral-400 hover:text-neutral-100 transition-colors">Autori</a>
             </nav>
         </header>
-    @endunless
+    @endif
 
-    <main id="contenuto" class="{{ $app ? 'min-h-0 flex-1' : 'mx-auto max-w-7xl px-4 py-8' }}">
+    <main id="contenuto" class="{{ $isApp ? 'min-h-0 flex-1' : 'mx-auto max-w-7xl px-4 py-8' }}">
         {{ $slot }}
     </main>
 
-    @unless ($app)
+    @if (! $isApp)
         <footer class="mx-auto max-w-7xl px-4 py-8 text-sm text-neutral-500">
-            © {{ now()->year }} {{ config('app.name') }}
+            &copy; {{ now()->year }} {{ config('app.name') }}
         </footer>
-    @endunless
+    @endif
 </body>
 </html>
