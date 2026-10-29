@@ -1,0 +1,9 @@
+.env
+.git
+node_modules
+vendor
+# Le foto e gli audio non entrano mai nell'immagine: stanno sul server, fuori da git.
+storage/app
+# Output di Vite (e hot file): l'immagine li rigenera nello stage node-builder.
+public/build
+public/hot

@@ -1,0 +1,1 @@
+set LOG_CHANNEL=null&& php artisan test --no-ansi --compact > test.log 2>&1
