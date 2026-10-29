@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="it" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery Photo System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light min-vh-100">
+
+  <nav class="navbar bg-secondary mb-4">
+    <div class="container">
+      <span class="navbar-brand mb-0 h1">
+        <i class="fa-solid fa-camera-retro me-2"></i>Gallery Photo System
+      </span>
+      <span class="text-info small">
+        <i class="fa-solid fa-folder-open me-1"></i><span id="galleryCount">0</span> gallerie
+      </span>
+    </div>
+  </nav>
+
+  <main class="container pb-5">
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border" role="status"></div>
+      <p class="mt-3 text-info">Caricamento gallerie...</p>
+    </div>
+    <div id="error" class="alert alert-danger d-none" role="alert"></div>
+    <div id="galleries" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const enc = encodeURIComponent;
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
+
+    function formatTitle(name) {
+      const m = name.match(/^(\d{4})[\s_-]+(\d{2})[\s_-]+(\d{2})\s*-\s*(.+)$/);
+      if (!m) return { date: '', rest: name };
+      return { date: `${m[3]}/${m[2]}/${m[1]}`, rest: m[4] };
+    }
+
+    async function fetchLines(url) {
+      try {
+        const r = await fetch(url, { cache: 'no-cache' });
+        if (!r.ok) return [];
+        const t = await r.text();
+        return t.split('\n').map(s => s.trim()).filter(Boolean);
+      } catch { return []; }
+    }
+
+    async function loadGallery(name) {
+      const [photos, songs] = await Promise.all([
+        fetchLines(enc(name) + '/photo.txt'),
+        fetchLines(enc(name) + '/song.txt')
+      ]);
+      return { name, photos, songs };
+    }
+
+    function formatBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(0) + ' KB';
+      if (b < 1024 * 1024 * 1024) return (b / 1024 / 1024).toFixed(1) + ' MB';
+      return (b / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    }
+
+    function renderCard(g) {
+      const { date, rest } = formatTitle(g.name);
+      const safeRest = escapeHtml(rest);
+      const galleryUrl = `gallery.html?g=${enc(g.name)}`;
+      const zipUrl = `${enc(g.name)}/photos.zip`;
+      const cover = g.photos.length ? `${enc(g.name)}/${enc(g.photos[0])}` : '';
+      const audioBadge = g.songs.length
+        ? `<span class="badge bg-info text-dark ms-1"><i class="fa-solid fa-music me-1"></i>${g.songs.length}</span>`
+        : '';
+      const coverHtml = cover
+        ? `<a href="${galleryUrl}" class="d-block" aria-label="Apri ${safeRest}">
+             <div class="ratio ratio-16x9">
+               <img src="${cover}" class="card-img-top object-fit-cover" alt="" loading="lazy">
+             </div>
+           </a>`
+        : `<a href="${galleryUrl}" class="d-block" aria-label="Apri ${safeRest}">
+             <div class="ratio ratio-16x9 bg-dark d-flex align-items-center justify-content-center">
+               <i class="fa-solid fa-image text-secondary fa-3x"></i>
+             </div>
+           </a>`;
+      return `
+        <div class="col">
+          <div class="card bg-secondary h-100 border-0 shadow">
+            ${coverHtml}
+            <div class="card-body d-flex flex-column">
+              <a href="${galleryUrl}" class="text-decoration-none text-light">
+                <h5 class="card-title mb-1 text-capitalize">${safeRest}</h5>
+              </a>
+              <p class="card-text small text-info mb-2">
+                <i class="fa-regular fa-calendar me-1"></i>${date}
+              </p>
+              <div class="mb-2">
+                <span class="badge bg-dark"><i class="fa-solid fa-images me-1"></i>${g.photos.length} foto</span>
+                ${audioBadge}
+              </div>
+              <div class="mt-auto"
+                   data-zip-url="${zipUrl}"
+                   data-gallery-name="${escapeHtml(g.name)}"
+                   data-photo-count="${g.photos.length}"></div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function hydrateZipButtons() {
+      const slots = document.querySelectorAll('[data-zip-url]');
+      await Promise.all([...slots].map(async slot => {
+        const url = slot.dataset.zipUrl;
+        const name = slot.dataset.galleryName;
+        const count = +slot.dataset.photoCount || 0;
+        try {
+          const r = await fetch(url, { method: 'HEAD' });
+          if (r.ok) {
+            const len = +r.headers.get('Content-Length') || 0;
+            const sizeLabel = len ? ` <span class="text-info">(${formatBytes(len)})</span>` : '';
+            slot.innerHTML =
+              `<a href="${url}" download class="btn btn-sm btn-outline-info w-100">
+                 <i class="fa-solid fa-file-zipper me-1"></i>Scarica ZIP${sizeLabel}
+               </a>`;
+            return;
+          }
+        } catch {}
+        slot.innerHTML =
+          `<button type="button" class="btn btn-sm btn-outline-warning w-100"
+                   data-generate-zip data-gallery-name="${escapeHtml(name)}">
+             <i class="fa-solid fa-bolt me-1"></i>Genera ZIP <span class="text-info">(${count} foto)</span>
+           </button>`;
+      }));
+    }
+
+    function loadJSZip() {
+      if (window.JSZip) return Promise.resolve(window.JSZip);
+      if (window._jszipPromise) return window._jszipPromise;
+      window._jszipPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+        s.onload = () => resolve(window.JSZip);
+        s.onerror = () => reject(new Error('JSZip non caricato'));
+        document.head.appendChild(s);
+      });
+      return window._jszipPromise;
+    }
+
+    async function generateZipClientSide(btn, galleryName) {
+      const original = btn.innerHTML;
+      const setLabel = html => btn.innerHTML = html;
+      btn.disabled = true;
+      setLabel('<span class="spinner-border spinner-border-sm me-1"></span>Preparazione...');
+      try {
+        const JSZipLib = await loadJSZip();
+        const photos = await fetchLines(`${enc(galleryName)}/photo.txt`);
+        if (!photos.length) throw new Error('Nessuna foto');
+
+        let estimate = 0;
+        try {
+          const r = await fetch(`${enc(galleryName)}/${enc(photos[0])}`, { method: 'HEAD' });
+          estimate = (+r.headers.get('Content-Length') || 0) * photos.length;
+        } catch {}
+        if (estimate > 500 * 1024 * 1024) {
+          const ok = confirm(`Lo ZIP stimato è ~${formatBytes(estimate)}. Operazione lunga e usa molta RAM del browser. Continuare?`);
+          if (!ok) { setLabel(original); btn.disabled = false; return; }
+        }
+
+        const zip = new JSZipLib();
+        let done = 0;
+        let cursor = 0;
+        const concurrency = 6;
+        const worker = async () => {
+          while (true) {
+            const i = cursor++;
+            if (i >= photos.length) return;
+            try {
+              const r = await fetch(`${enc(galleryName)}/${enc(photos[i])}`);
+              if (r.ok) zip.file(photos[i], await r.blob());
+            } catch {}
+            done++;
+            setLabel(`<span class="spinner-border spinner-border-sm me-1"></span>${done}/${photos.length}`);
+          }
+        };
+        await Promise.all(Array.from({ length: concurrency }, worker));
+
+        setLabel('<span class="spinner-border spinner-border-sm me-1"></span>Compressione...');
+        const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${galleryName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+
+        setLabel(original);
+        btn.disabled = false;
+      } catch (e) {
+        setLabel('<i class="fa-solid fa-triangle-exclamation me-1"></i>Errore');
+        setTimeout(() => { setLabel(original); btn.disabled = false; }, 3000);
+      }
+    }
+
+    (async () => {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const containerEl = document.getElementById('galleries');
+      const countEl = document.getElementById('galleryCount');
+
+      const galleryNames = await fetchLines('gallery.txt');
+      if (!galleryNames.length) {
+        loadingEl.classList.add('d-none');
+        errorEl.innerHTML = 'Nessuna galleria trovata. Esegui <code>bash/scan.sh</code> per generarle.';
+        errorEl.classList.remove('d-none');
+        return;
+      }
+
+      const galleries = await Promise.all(galleryNames.map(loadGallery));
+      const valid = galleries.filter(g => g.photos.length > 0);
+
+      loadingEl.classList.add('d-none');
+      countEl.textContent = valid.length;
+
+      if (!valid.length) {
+        errorEl.textContent = 'Nessuna galleria contiene foto.';
+        errorEl.classList.remove('d-none');
+        return;
+      }
+
+      containerEl.innerHTML = valid.map(renderCard).join('');
+      containerEl.addEventListener('click', e => {
+        const btn = e.target.closest('[data-generate-zip]');
+        if (!btn) return;
+        generateZipClientSide(btn, btn.dataset.galleryName);
+      });
+      hydrateZipButtons();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+*.png
+# Ignora le cartelle delle gallerie nella radice
+/[0-9][0-9][0-9][0-9]*/
