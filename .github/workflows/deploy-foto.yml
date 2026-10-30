@@ -53,6 +53,6 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_FOTO }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: /home/ubuntu/scripts/deploy-image.sh foto laravel
           command_timeout: 15m
