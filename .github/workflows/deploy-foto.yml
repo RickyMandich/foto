@@ -55,7 +55,10 @@ jobs:
         run: |
           for n in K1 K2; do
             v="${!n}"
-            echo "$n: byte=$(printf '%s' "$v" | wc -c) righe=$(printf '%s\n' "$v" | wc -l) CR=$(printf '%s' "$v" | tr -cd '\r' | wc -c) nonASCII=$(printf '%s' "$v" | LC_ALL=C tr -d '\11\12\15\40-\176' | wc -c)"
+            printf '%s\n' "$v" > "/tmp/$n"; chmod 600 "/tmp/$n"
+            echo "== $n =="
+            echo "ssh-keygen: $(ssh-keygen -y -f /tmp/$n 2>&1 | cut -c1-60)"
+            printf '%s\n' "$v" | while IFS= read -r l; do printf '%s %s\n' "${#l}" "$(printf '%s' "$l" | sha256sum | cut -c1-8)"; done
           done
 
       - name: Deploy via SSH
