@@ -99,6 +99,7 @@ Download ZIP: `GET /download/zip?eventi[]=2025-09-20&autori[]=anna` (almeno uno 
 | Percorso | Contenuto |
 |---|---|
 | `config/photos.php` | disk, cartella `_derived`, estensioni, parametri delle versioni, regex del nome cartella evento |
+| `.env-overrides` | variabili d'ambiente NON sensibili, tracciate in Git; caricate da `bootstrap/app.php` prima del `.env` (vincono su di esso). Oggi vuoto; niente segreti |
 | `database/migrations/` | `authors`, `events`, `galleries`, `photos`, `tracks` (le colonne dei nomi file usano una collation esatta su MariaDB, vedi `app/Support/DatabaseCollation.php`) |
 | `app/Models/` | `Author`, `Event`, `Gallery`, `Photo`, `Track`; `Photo::url()` e `Track::url()` costruiscono gli URL pubblici (`app/Support/PublicUrl.php`) |
 | `app/Services/Media/MediaSynchronizer.php` | logica di `media:sync` |
@@ -122,6 +123,10 @@ composer test        # test Pest
 ```
 
 In alternativa con Docker: `docker compose -f docker-compose.dev.yml up -d --build` (sito su http://localhost:88, MariaDB sulla porta 3307, worker incluso). Metti le foto di prova in `storage/app/public/<autore>/<AAAA MM GG - descrizione>/` e lancia `docker compose -f docker-compose.dev.yml exec app php artisan media:sync`.
+
+## Variabili d'ambiente
+
+`.env` (non tracciato, contiene i segreti; base: `.env.example`) e `.env-overrides` (tracciato, solo valori non sensibili, stesso meccanismo di `unlimiteddb`). `bootstrap/app.php` carica `.env-overrides` **prima** del `.env`, quindi le sue variabili vincono, anche su quelle impostate dal compose (`environment`). Il file finisce nell'immagine Docker (non è in `.dockerignore`): dopo averlo modificato serve una nuova build.
 
 ## Deploy (VM Oracle)
 

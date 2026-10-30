@@ -44,5 +44,6 @@ Dipendenze: `01` → nessuna; `02` → nessuna (parallelo a 01); `03` → 01, 02
 
 ## Dopo i piani
 
+- [x] `.env-overrides` (variabili non sensibili tracciate in Git, caricate da `bootstrap/app.php` prima del `.env`, come in `unlimiteddb`): file creato (vuoto, solo commento), `Dotenv::createMutable(...)->safeLoad()` in `bootstrap/app.php`, README aggiornato. Non provato con una build né con la suite (nessuna variabile dentro, quindi nessun effetto atteso)
 - [~] `media:sync` automatico: all'avvio del worker (`media-sync-boot`), nel `post-deploy.sh` e ogni giorno con lo scheduler (`laravel-schedule` = `schedule:work` nel `worker.conf`; lo schedule è in `routes/console.php`) — scritto, da provare sulla VM (`supervisorctl status` nel worker, log all'avvio)
 - [ ] Passaggio di `foto.mandich.dev` dalle GitHub Pages alla VM (DNS) e spegnimento delle Pages
