@@ -48,6 +48,16 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Diagnosi chiave (temporaneo)
+        env:
+          K1: ${{ secrets.SSH_PRIVATE_KEY }}
+          K2: ${{ secrets.SSH_PRIVATE_KEY_FOTO }}
+        run: |
+          for n in K1 K2; do
+            v="${!n}"
+            echo "$n: byte=$(printf '%s' "$v" | wc -c) righe=$(printf '%s\n' "$v" | wc -l) CR=$(printf '%s' "$v" | tr -cd '\r' | wc -c) nonASCII=$(printf '%s' "$v" | LC_ALL=C tr -d '\11\12\15\40-\176' | wc -c)"
+          done
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
