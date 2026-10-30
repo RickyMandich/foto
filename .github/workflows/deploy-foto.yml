@@ -47,25 +47,17 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Diagnosi chiave (temporaneo)
-        env:
-          K1: ${{ secrets.SSH_PRIVATE_KEY }}
-          K2: ${{ secrets.SSH_PRIVATE_KEY_FOTO }}
-        run: |
-          for n in K1 K2; do
-            v="${!n}"
-            printf '%s\n' "$v" > "/tmp/$n"; chmod 600 "/tmp/$n"
-            echo "== $n =="
-            echo "ssh-keygen: $(ssh-keygen -y -f /tmp/$n 2>&1 | cut -c1-60)"
-            printf '%s\n' "$v" | while IFS= read -r l; do printf '%s %s\n' "${#l}" "$(printf '%s' "$l" | sha256sum | cut -c1-8)"; done
-          done
-
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: /home/ubuntu/scripts/deploy-image.sh foto laravel
-          command_timeout: 15m
+        env:
+          KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          echo "hash secret: $(printf '%s' "$KEY_B64" | sha256sum | cut -c1-8)"
+          install -m 700 -d ~/.ssh
+          printf '%s' "$KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "chiave: $(ssh-keygen -y -f ~/.ssh/deploy_key | cut -c1-60)"
+          ssh -T -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST"
