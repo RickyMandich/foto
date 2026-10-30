@@ -1,4 +1,4 @@
-# Produzione / prova sulla VM Oracle (host foto-test.mandich.dev), schema di unlimiteddb.
+# Produzione / prova sulla VM Oracle (host foto.mandich.dev), schema di unlimiteddb.
 # Database: MariaDB dedicato (servizio "db"). Branch di deploy: laravel (immagine ghcr.io/rickymandich/foto:laravel).
 services:
   app:
@@ -38,7 +38,7 @@ services:
       - app
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.foto.rule=Host(`foto-test.mandich.dev`)"
+      - "traefik.http.routers.foto.rule=Host(`foto.mandich.dev`)"
       - "traefik.http.routers.foto.entrypoints=websecure"
       - "traefik.http.routers.foto.tls.certresolver=letsencrypt"
       - "traefik.http.services.foto.loadbalancer.server.port=80"

@@ -19,7 +19,7 @@ docker compose -f docker-compose.dev.yml down             # ferma tutto (con -v 
 
 Il database è MariaDB (porta 3307 sull'host per i client SQL). Pagine pubbliche non ancora implementate: per ora si verifica con i test e con `GET http://localhost:88/download/zip?eventi[]=AAAA-MM-GG`.
 
-Sul server (host di prova `foto-test.mandich.dev`): `bash/upload-event.sh "<cartella-evento>" rickymandich` invia un evento, poi `cd ~/sites/foto && docker compose exec -T app php artisan media:sync`. Il deploy parte da un push sul branch `laravel`.
+Sul server (`foto.mandich.dev`): `bash/upload-event.sh "<cartella-evento>" rickymandich` invia un evento (con la percentuale sul totale dell'evento), `bash/upload-all.sh` li invia tutti (setup iniziale), poi `cd ~/sites/foto && docker compose exec -T app php artisan media:sync`. Il deploy parte da un push sul branch `laravel`.
 
 Dettagli nelle sezioni seguenti; come è fatto il compose di sviluppo (e in cosa differisce da quello di `unlimiteddb`) è spiegato al punto 7.5 del piano.
 
@@ -53,8 +53,8 @@ storage/app/public/
 
 Flusso di lavoro:
 
-1. Si invia la cartella dell'evento al server con `bash/upload-event.sh <cartella-evento> <autore>` (rsync su SSH, riprende se interrotto).
-2. Sul server si lancia `php artisan media:sync`: scansiona il disco (**il filesystem è la source of truth**) e allinea il database.
+1. Si invia la cartella dell'evento al server con `bash/upload-event.sh <cartella-evento> <autore>` (rsync su SSH, riprende se interrotto; mostra la percentuale sul totale dell'evento). Per il setup iniziale `bash/upload-all.sh` invia in sequenza tutti gli eventi presenti in `storage/app/public` (e gli `autore.md`), senza fermarsi se uno fallisce.
+2. Sul server `php artisan media:sync` scansiona il disco (**il filesystem è la source of truth**) e allinea il database; parte da solo all'avvio del worker, a ogni deploy e ogni giorno, e si può lanciare a mano subito dopo un upload.
 3. Per ogni foto nuova o modificata `media:sync` mette in coda `GeneratePhotoVersionsJob`, che crea la versione **web** (lato lungo 1920 px) e la **miniatura** (480 px) in WebP qualità 80. L'originale resta quello scaricabile.
 4. nginx serve originali e versioni da `/storage/...`; gli originali si scaricano uno a uno (link con `download`) o in ZIP.
 
@@ -108,6 +108,7 @@ Download ZIP: `GET /download/zip?eventi[]=2025-09-20&autori[]=anna` (almeno uno 
 | `tests/Feature/Media/` | test di sincronizzazione, versioni e ZIP; helper in `tests/Pest.php` |
 | `docker/`, `Dockerfile`, `docker-compose*.yml`, `deploy/`, `.github/workflows/` | infrastruttura |
 | `bash/upload-event.sh` | invio di un evento al server |
+| `bash/upload-all.sh` | invio di tutti gli eventi locali (setup iniziale) |
 
 ## Setup locale
 
@@ -124,13 +125,13 @@ In alternativa con Docker: `docker compose -f docker-compose.dev.yml up -d --bui
 
 ## Deploy (VM Oracle)
 
-Come `unlimiteddb`: push sul branch `laravel` → GitHub Actions costruisce l'immagine `ghcr.io/rickymandich/foto:laravel` → la VM la scarica con `~/scripts/deploy-image.sh foto laravel`, che usa `deploy/pre-deploy.sh` e `deploy/post-deploy.sh`. Sito in `~/sites/foto`, host di prova `foto-test.mandich.dev` (il DNS ricade nel wildcard `*.mandich.dev`). Il `.env` di produzione si crea a mano sul server.
+Come `unlimiteddb`: push sul branch `laravel` → GitHub Actions costruisce l'immagine `ghcr.io/rickymandich/foto:laravel` → la VM la scarica con `~/scripts/deploy-image.sh foto laravel`, che usa `deploy/pre-deploy.sh` e `deploy/post-deploy.sh`. Sito in `~/sites/foto` su `foto.mandich.dev` (DNS già puntato alla VM). Il `.env` di produzione si crea a mano sul server.
 
 Note di infrastruttura:
 
 - Gli originali arrivano da rsync e restano dell'utente host (file 644, cartelle 755): il container li legge, scrive solo in `storage/app/public/_derived` (l'entrypoint non fa `chown -R` su tutto `storage`).
 - La VM ha meno di 1 GB di RAM: un solo worker, una foto alla volta (`--memory=200`, `memory_limit=256M`). `retry_after` della coda (180 s) deve restare superiore al timeout del job (120 s).
-- `media:sync` non viene lanciato dal deploy: va lanciato a mano dopo ogni upload (`docker compose exec -T app php artisan media:sync`).
+- `media:sync` parte da solo in tre momenti: all'avvio del container `worker` (programma `media-sync-boot` di `docker/supervisor/worker.conf`, vale anche dopo un riavvio della VM), a ogni deploy (`deploy/post-deploy.sh`, dopo `migrate`) e ogni giorno a mezzanotte (`Schedule::command('media:sync')->daily()` in `routes/console.php`, eseguito dal programma `laravel-schedule` = `schedule:work` nel worker). Dopo un upload si può lanciarlo a mano per non aspettare: `docker compose exec -T -u www-data app php artisan media:sync` (`-u www-data` per non creare file di log del root). Se due sincronizzazioni si sovrappongono, la seconda esce con "Una sincronizzazione è già in corso" (lock): innocuo. In sviluppo (`docker-compose.dev.yml`) il worker non ha supervisord, quindi niente scheduler né sync all'avvio: si lancia a mano.
 - Il database di produzione è MariaDB dedicato (servizio `db` di `docker-compose.yml`); resta da verificare in Fase 0.1 che la RAM della VM basti.
 
 ## Convenzioni di sviluppo

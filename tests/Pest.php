@@ -18,7 +18,7 @@ pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Feature');
  */
 function makeMediaRoot(): string
 {
-    $root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'foto-test-'.bin2hex(random_bytes(6));
+    $root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'foto-'.bin2hex(random_bytes(6));
     File::ensureDirectoryExists($root);
 
     config([

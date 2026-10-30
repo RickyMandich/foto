@@ -44,4 +44,5 @@ Dipendenze: `01` → nessuna; `02` → nessuna (parallelo a 01); `03` → 01, 02
 
 ## Dopo i piani
 
+- [~] `media:sync` automatico: all'avvio del worker (`media-sync-boot`), nel `post-deploy.sh` e ogni giorno con lo scheduler (`laravel-schedule` = `schedule:work` nel `worker.conf`; lo schedule è in `routes/console.php`) — scritto, da provare sulla VM (`supervisorctl status` nel worker, log all'avvio)
 - [ ] Passaggio di `foto.mandich.dev` dalle GitHub Pages alla VM (DNS) e spegnimento delle Pages
